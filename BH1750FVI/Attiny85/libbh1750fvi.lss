@@ -1,0 +1,245 @@
+Nell'archivio libbh1750fvi.a:
+
+BH1750FVI.o:     formato del file elf32-avr
+
+Sezioni:
+Ind Nome          Dimens    VMA       LMA       Pos file  Allin
+  0 .text         00000000  00000000  00000000  00000034  2**0
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00000000  00000000  00000034  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          00000000  00000000  00000000  00000034  2**0
+                  ALLOC
+  3 .text._ZN9BH1750FVIC2ER7USI_TWI 00000010  00000000  00000000  00000034  2**0
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  4 .text._ZN9BH1750FVI10setAddressEhh 00000044  00000000  00000000  00000044  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  5 .text._ZN9BH1750FVI17getLightIntensityEv 00000050  00000000  00000000  00000088  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  6 .text._ZN9BH1750FVI10writeToBusEh 00000026  00000000  00000000  000000d8  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  7 .text._ZN9BH1750FVI5sleepEv 00000004  00000000  00000000  000000fe  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  8 .text._ZN9BH1750FVI5resetEv 00000014  00000000  00000000  00000102  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  9 .rodata.str1.1 0000001d  00000000  00000000  00000116  2**0
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 10 .text._ZN9BH1750FVI7setModeEh 00000054  00000000  00000000  00000133  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+ 11 .text._ZN9BH1750FVI6wakeUpEv 00000006  00000000  00000000  00000187  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+ 12 .text._ZN9BH1750FVI6wakeUpEh 00000002  00000000  00000000  0000018d  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+ 13 .text._ZN9BH1750FVI7powerOnEv 00000014  00000000  00000000  0000018f  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+ 14 .comment      00000012  00000000  00000000  000001a3  2**0
+                  CONTENTS, READONLY
+
+Disassemblamento della sezione .text._ZN9BH1750FVIC2ER7USI_TWI:
+
+00000000 <_ZN9BH1750FVIC1ER7USI_TWI>:
+   0:	fc 01       	movw	r30, r24
+   2:	73 83       	std	Z+3, r23	; 0x03
+   4:	62 83       	std	Z+2, r22	; 0x02
+   6:	83 e2       	ldi	r24, 0x23	; 35
+   8:	80 83       	st	Z, r24
+   a:	80 e1       	ldi	r24, 0x10	; 16
+   c:	81 83       	std	Z+1, r24	; 0x01
+   e:	08 95       	ret
+
+Disassemblamento della sezione .text._ZN9BH1750FVI10setAddressEhh:
+
+00000000 <_ZN9BH1750FVI10setAddressEhh>:
+   0:	ff 92       	push	r15
+   2:	0f 93       	push	r16
+   4:	1f 93       	push	r17
+   6:	cf 93       	push	r28
+   8:	df 93       	push	r29
+   a:	1f 92       	push	r1
+   c:	cd b7       	in	r28, 0x3d	; 61
+   e:	de b7       	in	r29, 0x3e	; 62
+  10:	8c 01       	movw	r16, r24
+  12:	f6 2e       	mov	r15, r22
+  14:	61 e0       	ldi	r22, 0x01	; 1
+  16:	8f 2d       	mov	r24, r15
+  18:	49 83       	std	Y+1, r20	; 0x01
+  1a:	00 d0       	rcall	.+0      	; 0x1c <_ZN9BH1750FVI10setAddressEhh+0x1c>
+  1c:	49 81       	ldd	r20, Y+1	; 0x01
+  1e:	44 23       	and	r20, r20
+  20:	01 f0       	breq	.+0      	; 0x22 <_ZN9BH1750FVI10setAddressEhh+0x22>
+  22:	8c e5       	ldi	r24, 0x5C	; 92
+  24:	f8 01       	movw	r30, r16
+  26:	80 83       	st	Z, r24
+  28:	61 e0       	ldi	r22, 0x01	; 1
+  2a:	00 c0       	rjmp	.+0      	; 0x2c <_ZN9BH1750FVI10setAddressEhh+0x2c>
+  2c:	83 e2       	ldi	r24, 0x23	; 35
+  2e:	f8 01       	movw	r30, r16
+  30:	80 83       	st	Z, r24
+  32:	60 e0       	ldi	r22, 0x00	; 0
+  34:	8f 2d       	mov	r24, r15
+  36:	0f 90       	pop	r0
+  38:	df 91       	pop	r29
+  3a:	cf 91       	pop	r28
+  3c:	1f 91       	pop	r17
+  3e:	0f 91       	pop	r16
+  40:	ff 90       	pop	r15
+  42:	00 c0       	rjmp	.+0      	; 0x44 <__SREG__+0x5>
+
+Disassemblamento della sezione .text._ZN9BH1750FVI17getLightIntensityEv:
+
+00000000 <_ZN9BH1750FVI17getLightIntensityEv>:
+   0:	0f 93       	push	r16
+   2:	1f 93       	push	r17
+   4:	cf 93       	push	r28
+   6:	df 93       	push	r29
+   8:	8c 01       	movw	r16, r24
+   a:	42 e0       	ldi	r20, 0x02	; 2
+   c:	fc 01       	movw	r30, r24
+   e:	60 81       	ld	r22, Z
+  10:	82 81       	ldd	r24, Z+2	; 0x02
+  12:	93 81       	ldd	r25, Z+3	; 0x03
+  14:	00 d0       	rcall	.+0      	; 0x16 <_ZN9BH1750FVI17getLightIntensityEv+0x16>
+  16:	f8 01       	movw	r30, r16
+  18:	82 81       	ldd	r24, Z+2	; 0x02
+  1a:	93 81       	ldd	r25, Z+3	; 0x03
+  1c:	00 d0       	rcall	.+0      	; 0x1e <_ZN9BH1750FVI17getLightIntensityEv+0x1e>
+  1e:	c8 2f       	mov	r28, r24
+  20:	d0 e0       	ldi	r29, 0x00	; 0
+  22:	dc 2f       	mov	r29, r28
+  24:	cc 27       	eor	r28, r28
+  26:	f8 01       	movw	r30, r16
+  28:	82 81       	ldd	r24, Z+2	; 0x02
+  2a:	93 81       	ldd	r25, Z+3	; 0x03
+  2c:	00 d0       	rcall	.+0      	; 0x2e <_ZN9BH1750FVI17getLightIntensityEv+0x2e>
+  2e:	be 01       	movw	r22, r28
+  30:	68 2b       	or	r22, r24
+  32:	80 e0       	ldi	r24, 0x00	; 0
+  34:	90 e0       	ldi	r25, 0x00	; 0
+  36:	00 d0       	rcall	.+0      	; 0x38 <_ZN9BH1750FVI17getLightIntensityEv+0x38>
+  38:	2a e9       	ldi	r18, 0x9A	; 154
+  3a:	39 e9       	ldi	r19, 0x99	; 153
+  3c:	49 e9       	ldi	r20, 0x99	; 153
+  3e:	5f e3       	ldi	r21, 0x3F	; 63
+  40:	00 d0       	rcall	.+0      	; 0x42 <_ZN9BH1750FVI17getLightIntensityEv+0x42>
+  42:	00 d0       	rcall	.+0      	; 0x44 <_ZN9BH1750FVI17getLightIntensityEv+0x44>
+  44:	cb 01       	movw	r24, r22
+  46:	df 91       	pop	r29
+  48:	cf 91       	pop	r28
+  4a:	1f 91       	pop	r17
+  4c:	0f 91       	pop	r16
+  4e:	08 95       	ret
+
+Disassemblamento della sezione .text._ZN9BH1750FVI10writeToBusEh:
+
+00000000 <_ZN9BH1750FVI10writeToBusEh>:
+   0:	1f 93       	push	r17
+   2:	cf 93       	push	r28
+   4:	df 93       	push	r29
+   6:	ec 01       	movw	r28, r24
+   8:	16 2f       	mov	r17, r22
+   a:	68 81       	ld	r22, Y
+   c:	8a 81       	ldd	r24, Y+2	; 0x02
+   e:	9b 81       	ldd	r25, Y+3	; 0x03
+  10:	00 d0       	rcall	.+0      	; 0x12 <_ZN9BH1750FVI10writeToBusEh+0x12>
+  12:	61 2f       	mov	r22, r17
+  14:	8a 81       	ldd	r24, Y+2	; 0x02
+  16:	9b 81       	ldd	r25, Y+3	; 0x03
+  18:	00 d0       	rcall	.+0      	; 0x1a <_ZN9BH1750FVI10writeToBusEh+0x1a>
+  1a:	8a 81       	ldd	r24, Y+2	; 0x02
+  1c:	9b 81       	ldd	r25, Y+3	; 0x03
+  1e:	df 91       	pop	r29
+  20:	cf 91       	pop	r28
+  22:	1f 91       	pop	r17
+  24:	00 c0       	rjmp	.+0      	; 0x26 <__zero_reg__+0x25>
+
+Disassemblamento della sezione .text._ZN9BH1750FVI5sleepEv:
+
+00000000 <_ZN9BH1750FVI5sleepEv>:
+   0:	60 e0       	ldi	r22, 0x00	; 0
+   2:	00 c0       	rjmp	.+0      	; 0x4 <__zero_reg__+0x3>
+
+Disassemblamento della sezione .text._ZN9BH1750FVI5resetEv:
+
+00000000 <_ZN9BH1750FVI5resetEv>:
+   0:	cf 93       	push	r28
+   2:	df 93       	push	r29
+   4:	ec 01       	movw	r28, r24
+   6:	61 e0       	ldi	r22, 0x01	; 1
+   8:	00 d0       	rcall	.+0      	; 0xa <_ZN9BH1750FVI5resetEv+0xa>
+   a:	67 e0       	ldi	r22, 0x07	; 7
+   c:	ce 01       	movw	r24, r28
+   e:	df 91       	pop	r29
+  10:	cf 91       	pop	r28
+  12:	00 c0       	rjmp	.+0      	; 0x14 <__zero_reg__+0x13>
+
+Disassemblamento della sezione .text._ZN9BH1750FVI7setModeEh:
+
+00000000 <_ZN9BH1750FVI7setModeEh>:
+   0:	0f 93       	push	r16
+   2:	1f 93       	push	r17
+   4:	cf 93       	push	r28
+   6:	8c 01       	movw	r16, r24
+   8:	c6 2f       	mov	r28, r22
+   a:	63 31       	cpi	r22, 0x13	; 19
+   c:	01 f0       	breq	.+0      	; 0xe <_ZN9BH1750FVI7setModeEh+0xe>
+   e:	00 f4       	brcc	.+0      	; 0x10 <_ZN9BH1750FVI7setModeEh+0x10>
+  10:	80 ef       	ldi	r24, 0xF0	; 240
+  12:	86 0f       	add	r24, r22
+  14:	82 30       	cpi	r24, 0x02	; 2
+  16:	00 f4       	brcc	.+0      	; 0x18 <_ZN9BH1750FVI7setModeEh+0x18>
+  18:	00 c0       	rjmp	.+0      	; 0x1a <_ZN9BH1750FVI7setModeEh+0x1a>
+  1a:	60 32       	cpi	r22, 0x20	; 32
+  1c:	00 f0       	brcs	.+0      	; 0x1e <_ZN9BH1750FVI7setModeEh+0x1e>
+  1e:	62 32       	cpi	r22, 0x22	; 34
+  20:	00 f0       	brcs	.+0      	; 0x22 <_ZN9BH1750FVI7setModeEh+0x22>
+  22:	63 32       	cpi	r22, 0x23	; 35
+  24:	01 f4       	brne	.+0      	; 0x26 <_ZN9BH1750FVI7setModeEh+0x26>
+  26:	6c 2f       	mov	r22, r28
+  28:	c8 01       	movw	r24, r16
+  2a:	00 d0       	rcall	.+0      	; 0x2c <_ZN9BH1750FVI7setModeEh+0x2c>
+  2c:	f8 01       	movw	r30, r16
+  2e:	c1 83       	std	Z+1, r28	; 0x01
+  30:	cf 91       	pop	r28
+  32:	1f 91       	pop	r17
+  34:	0f 91       	pop	r16
+  36:	08 95       	ret
+  38:	60 e0       	ldi	r22, 0x00	; 0
+  3a:	70 e0       	ldi	r23, 0x00	; 0
+  3c:	80 e0       	ldi	r24, 0x00	; 0
+  3e:	90 e0       	ldi	r25, 0x00	; 0
+  40:	00 d0       	rcall	.+0      	; 0x42 <_ZN9BH1750FVI7setModeEh+0x42>
+  42:	40 e1       	ldi	r20, 0x10	; 16
+  44:	50 e0       	ldi	r21, 0x00	; 0
+  46:	6c 2f       	mov	r22, r28
+  48:	80 e0       	ldi	r24, 0x00	; 0
+  4a:	90 e0       	ldi	r25, 0x00	; 0
+  4c:	cf 91       	pop	r28
+  4e:	1f 91       	pop	r17
+  50:	0f 91       	pop	r16
+  52:	00 c0       	rjmp	.+0      	; 0x54 <__SREG__+0x15>
+
+Disassemblamento della sezione .text._ZN9BH1750FVI6wakeUpEv:
+
+00000000 <_ZN9BH1750FVI6wakeUpEv>:
+   0:	fc 01       	movw	r30, r24
+   2:	61 81       	ldd	r22, Z+1	; 0x01
+   4:	00 c0       	rjmp	.+0      	; 0x6 <__zero_reg__+0x5>
+
+Disassemblamento della sezione .text._ZN9BH1750FVI6wakeUpEh:
+
+00000000 <_ZN9BH1750FVI6wakeUpEh>:
+   0:	00 c0       	rjmp	.+0      	; 0x2 <__zero_reg__+0x1>
+
+Disassemblamento della sezione .text._ZN9BH1750FVI7powerOnEv:
+
+00000000 <_ZN9BH1750FVI7powerOnEv>:
+   0:	cf 93       	push	r28
+   2:	df 93       	push	r29
+   4:	ec 01       	movw	r28, r24
+   6:	61 e0       	ldi	r22, 0x01	; 1
+   8:	00 d0       	rcall	.+0      	; 0xa <_ZN9BH1750FVI7powerOnEv+0xa>
+   a:	69 81       	ldd	r22, Y+1	; 0x01
+   c:	ce 01       	movw	r24, r28
+   e:	df 91       	pop	r29
+  10:	cf 91       	pop	r28
+  12:	00 c0       	rjmp	.+0      	; 0x14 <__zero_reg__+0x13>
