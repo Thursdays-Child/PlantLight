@@ -2,7 +2,7 @@
 ### Automatic light switch based on light sensor and date/time
 **version 0.2**
 
-The project is an automatic switch for 2 LED light used to illuminate 
+The project is an automatic switch for 2 LED lamps used to illuminate 
 some plants in my house. On board there is a real time clock, to keep track of 
 the actual date and time even on power loss, and the light sensor is placed 
 on a separate breakout board. A relay switches the main power (230 V AC) to 
@@ -10,6 +10,7 @@ the LEDs. The micro is an Atmel ATTiny 85V.
 
 The project is compiled for Atmel AVR,  with standard AVR GCC toolchain. 
 Eclipse was used to create and compile the projects, with the AVR Plugin.
+
 TODO A makefile is available to compile without Eclispe. 
 
 This project consists of a main C++ file and some libraries (C/C++):
@@ -32,4 +33,4 @@ The documentation folder contains:
 * datasheet of used components;
 * electrical drawings;
 
-Some pictures can be found at TODO 
+Some pictures can be found at https://goo.gl/photos/P42G4u1Tg8iYygQf6 

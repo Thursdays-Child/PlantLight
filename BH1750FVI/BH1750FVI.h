@@ -5,6 +5,9 @@
  * Revision merged with library from Christopher Laws, March, 2013.
  * Credits for the first version to: Mohannad Rawashdeh, www.genotronex.com.
  *
+ * Modified to use a private: USI_TWI &busI2C reference at the I2C bus
+ * from the application.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at

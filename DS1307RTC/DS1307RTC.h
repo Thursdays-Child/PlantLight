@@ -1,5 +1,7 @@
 // Code by JeeLabs http://news.jeelabs.org/code/
 // Released to the public domain! Enjoy!
+// Modified to use a private: USI_TWI &busI2C reference at the I2C bus
+// from the application. Static method removed to use the class members.
 
 #include <TinyWireM.h>
 #include <avr/pgmspace.h>
@@ -55,12 +57,6 @@ public:
   void sqw(int sqw);
   uint8_t isrunning(void);
   DateTime now();
-
-//  static uint8_t begin(void);
-//  static void adjust(const DateTime& dt);
-//  static void sqw(int sqw);
-//  uint8_t isrunning(void);
-//  static DateTime now();
 
 private:
   USI_TWI &busI2C;

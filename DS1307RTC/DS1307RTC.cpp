@@ -1,5 +1,7 @@
 // Code by JeeLabs http://news.jeelabs.org/code/
 // Released to the public domain! Enjoy!
+// Modified to use a private: USI_TWI &busI2C reference at the I2C bus
+// from the application. Static method removed to use the class members.
 
 #include <DS1307RTC.h>
 
