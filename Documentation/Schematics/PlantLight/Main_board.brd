@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.01" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.025" altunitdist="inch" altunit="inch"/>
+<grid distance="0.01" unitdist="inch" unit="mm" style="lines" multiple="1" display="no" altdistance="0.025" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -18,10 +18,10 @@
 <layer number="22" name="bPlace" color="16" fill="1" visible="yes" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
@@ -146,8 +146,6 @@
 <wire x1="56.318" y1="60.162" x2="6.318" y2="60.162" width="0" layer="20"/>
 <hole x="35.318" y="57.662" drill="2"/>
 <hole x="35.318" y="12.662" drill="2"/>
-<dimension x1="6.318" y1="60.162" x2="56.318" y2="60.162" x3="31.318" y3="63.246" textsize="1.778" layer="20" visible="yes"/>
-<dimension x1="6.318" y1="60.162" x2="6.318" y2="10.162" x3="2.032" y3="35.162" textsize="1.778" layer="20" visible="yes"/>
 <text x="50.8" y="56.896" size="0.6096" layer="21">VCC</text>
 <text x="50.8" y="54.356" size="0.6096" layer="21">GND</text>
 <text x="50.8" y="51.816" size="0.6096" layer="21">SDA</text>
@@ -173,6 +171,7 @@
 <text x="10.668" y="56.388" size="1.016" layer="21">GND</text>
 <text x="43.18" y="53.086" size="1.016" layer="21">TINY-85</text>
 <text x="43.18" y="41.91" size="1.016" layer="21">DS1307</text>
+<hole x="53.34" y="12.662" drill="2"/>
 </plain>
 <libraries>
 <library name="adafruit">
