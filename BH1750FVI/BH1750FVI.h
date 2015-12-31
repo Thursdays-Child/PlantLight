@@ -29,10 +29,10 @@
 #include "TinyWireM.h"
 
 // Device address when address pin LOW: default
-#define BH1750_I2CADDR_L 0x23
+#define BH1750_I2CADDR_L                    0x23
 
 // Device address when address pin HIGH
-#define BH1750_I2CADDR_H 0x5C
+#define BH1750_I2CADDR_H                    0x5C
 
 // #############################################################
 // All command here taken from Data sheet OPECODE Table page 5
@@ -68,8 +68,11 @@
 // Device is automatically set to Power Down after measurement.
 #define BH1750_ONE_TIME_LOW_RES_MODE        0x23
 
-// Scale coefficient for lux conversion
-#define LUX_SCALE_COEF                      1.2
+// Default measurement accuracy
+#define LUX_ACC_COEF                        1.2
+
+// Default value for measurement time register (MTReg, from datasheet)
+#define MTREG_DEF_VALUE                     69
 
 /**
  * The I2C library actually supported is only TinyWireM, to save
@@ -89,18 +92,60 @@ public:
    * The powerOn() method has to be called after begin() on the I2C bus
    */
   void powerOn(void);
+
+  /**
+   * Put the sensor to powerdown state: powerOn() or setMode() wake up the device
+   */
   void sleep(void);
+
+  /**
+   * Reset the internal data register (holds the last sensed data)
+   */
   void reset(void);
+
+  /**
+   * Wake up with default mode, and with custom mode
+   */
   void wakeUp();
   void wakeUp(uint8_t mode);
+
+  /**
+   * Get/set measurement time register value [31..254]
+   */
+  uint8_t getMtreg();
+  void setMtreg(uint8_t mtreg);
+
+  /**
+   * Get/set measurement mode
+   */
+  uint8_t getMode();
   void setMode(uint8_t mode);
+
+  /**
+   * Set address to be "high" or "low", with the corresponding output pin
+   */
   void setAddress(uint8_t addPin, boolean add);
-  uint16_t getLightIntensity(void);
+  /**
+   * Get current device I2C address:
+   */
+  uint8_t getAddress();
+
+  /**
+   * Returns light intensity in lux: range and accuracy depend on
+   * sensor mode configuration
+   */
+  float getLightIntensity(void);
 
 private:
   void writeToBus(uint8_t DataToSend);
-  byte address;
-  byte currentMode;
+  uint8_t address;
+  uint8_t currentMode;
+
+  // Measurement time register
+  float mtreg;
+
+  // High resolution coefficient = [1.0, 2.0]
+  float hiResCoef;
 
   USI_TWI &busI2C;
 };

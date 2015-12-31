@@ -24,13 +24,15 @@
 
 #include "BH1750FVI.h"
 
-BH1750FVI::BH1750FVI(USI_TWI &bus): busI2C(bus) {
+BH1750FVI::BH1750FVI(USI_TWI &bus) : busI2C(bus) {
   address = BH1750_I2CADDR_L;
   currentMode = BH1750_CONTINUOUS_HIGH_RES_MODE;
+  mtreg = MTREG_DEF_VALUE;
+  hiResCoef = 1.0;
 }
 
 void BH1750FVI::powerOn(void) {
-  writeToBus(BH1750_POWER_ON);      // Turn it On
+  writeToBus(BH1750_POWER_ON);      // Turn it on
   setMode(currentMode);
 }
 
@@ -52,6 +54,31 @@ void BH1750FVI::wakeUp(uint8_t mode) {
   setMode(mode);
 }
 
+uint8_t BH1750FVI::getMtreg() {
+  return mtreg;
+}
+
+void BH1750FVI::setMtreg(uint8_t mtreg) {
+  if (mtreg < 31 || mtreg > 254) {
+#if BH1750_DEBUG == 1
+      Serial.print("Invalid measurement time reg value: ");
+      Serial.println(mtreg, DEC);
+#endif
+    return;
+  }
+
+  this->mtreg = mtreg;
+
+  // Byte composition from datasheet:
+  // High byte = 01000_MTREG_bit[7,6,5]
+  // Low byte =  011_MTReg_bit[4,3,2,1,0]
+  byte hByte = ((mtreg & 0xE0) >> 5) | 0x40;
+  byte lByte = (mtreg & 0x1F) | 0x60;
+
+  writeToBus(hByte);
+  writeToBus(lByte);
+}
+
 void BH1750FVI::setAddress(uint8_t addPin, boolean add) {
   pinMode(addPin, OUTPUT);
 
@@ -62,6 +89,14 @@ void BH1750FVI::setAddress(uint8_t addPin, boolean add) {
     address = BH1750_I2CADDR_L;
     digitalWrite(addPin, LOW);
   }
+}
+
+uint8_t BH1750FVI::getAddress() {
+  return address;
+}
+
+uint8_t BH1750FVI::getMode() {
+  return currentMode;
 }
 
 void BH1750FVI::setMode(uint8_t mode) {
@@ -76,6 +111,13 @@ void BH1750FVI::setMode(uint8_t mode) {
       writeToBus(mode);
       currentMode = mode;
 
+      if (currentMode == BH1750_CONTINUOUS_HIGH_RES_MODE_2 ||
+          currentMode == BH1750_ONE_TIME_HIGH_RES_MODE_2) {
+        hiResCoef = 2.0;
+      } else {
+        hiResCoef = 1.0;
+      }
+
       break;
     default:
       // Invalid measurement mode
@@ -87,7 +129,7 @@ void BH1750FVI::setMode(uint8_t mode) {
   }
 }
 
-uint16_t BH1750FVI::getLightIntensity(void) {
+float BH1750FVI::getLightIntensity(void) {
   uint16_t intensityValue;
 
   // With TinyWireM library beginTransmission() and endTransmission()
@@ -98,9 +140,14 @@ uint16_t BH1750FVI::getLightIntensity(void) {
   intensityValue <<= 8;
   intensityValue |= busI2C.receive();
 
-  intensityValue = intensityValue / LUX_SCALE_COEF;
+  float luxValue = intensityValue;
 
-  return intensityValue;
+  // H-resolution mode  : Illuminance per 1 count ( lx / count ) = 1 / 1.2 *( 69 / X )
+  // H-resolution mode2 : Illuminance per 1 count ( lx / count ) = 1 / 1.2 *( 69 / X ) / 2
+
+  luxValue = (luxValue / LUX_ACC_COEF * (MTREG_DEF_VALUE / mtreg)) / hiResCoef;
+
+  return luxValue;
 }
 
 void BH1750FVI::writeToBus(uint8_t DataToSend) {
