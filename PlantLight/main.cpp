@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.2
+ * VERSION 0.3
  */
 
 #include <Arduino.h>
@@ -26,18 +26,20 @@
 #include <BH1750FVI.h>
 #include <DS1307RTC.h>
 
-#define RELAY_SW                4       // Relay out pin
-#define CMD_MAN                 1       // Manual light switch
+#define RELAY_SW_OUT               4        // Relay out pin
+#define CMD_MAN_IN                 1        // Manual light switch
 
-USI_TWI bus; // TinyWireM instance (I2C bus)
+USI_TWI bus;                                // TinyWireM instance (I2C bus)
 BH1750FVI BH1750(bus);
 RTC_DS1307 RTC(bus);
 
-void setup() {
-  Serial.begin(9600); // Init serial band rate
+long unsigned int startTime = 0;
 
-  pinMode(RELAY_SW, OUTPUT);
-  pinMode(CMD_MAN, INPUT_PULLUP);
+void setup() {
+  Serial.begin(9600);                       // Init serial band rate
+
+  pinMode(RELAY_SW_OUT, OUTPUT);
+  pinMode(CMD_MAN_IN, INPUT_PULLUP);
 
   // I2C begin() is called BEFORE sensors library "begin" methods:
   // it is called just once for all the sensors.
@@ -47,6 +49,10 @@ void setup() {
   // Light sensor
   BH1750.powerOn();
 
+  BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
+
+  BH1750.setMtreg(250);
+
   // Real time clock
   RTC.sqw(0);
   if (!RTC.isrunning()) {
@@ -54,9 +60,10 @@ void setup() {
     RTC.adjust(DateTime(__DATE__, __TIME__));
   }
 
+  startTime = millis();
 }
 
-void log(DateTime dt, uint16_t lt) {
+void log(DateTime dt, float lt) {
   Serial.print(dt.year(), DEC);
   Serial.print('/');
   Serial.print(dt.month(), DEC);
@@ -73,21 +80,36 @@ void log(DateTime dt, uint16_t lt) {
 }
 
 boolean relayState = 0;
-uint16_t lux = 0;
+float lux = 0;
 DateTime now;
 
+uint8_t btnInCounter = 0;
+
 void loop() {
-  lux = BH1750.getLightIntensity(); // Get lux value
-  now = RTC.now();
+  if (!digitalRead(CMD_MAN_IN)) {
+    if (btnInCounter < 10) {
+      btnInCounter++;
+    }
+  } else {
+    btnInCounter = 0;
+  }
 
-  log(now, lux);
+  if (millis() - startTime >= 500) {
+    startTime = millis();
 
-  if (lux <= 10 || !digitalRead(CMD_MAN)) {
-    relayState = true;
-  } else relayState = false;
+    lux = BH1750.getLightIntensity(); // Get lux value
+    now = RTC.now();
 
-  digitalWrite(RELAY_SW, relayState);
+    log(now, lux);
 
-  delay(10000);
+    if (btnInCounter >= 10) {
+      relayState = true;
+    } else if (lux <= 10) {
+      relayState = true;
+    } else {
+      relayState = false;
+    }
 
+    digitalWrite(RELAY_SW_OUT, relayState);
+  }
 }
