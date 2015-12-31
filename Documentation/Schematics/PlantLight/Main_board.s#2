@@ -9642,9 +9642,9 @@ http://www.ee.siue.edu/~alozows/library/datasheets/BFR96.pdf</description>
 <description>Battery holder CR2032 from EbmStore</description>
 <wire x1="-0.535" y1="12.185" x2="0.535" y2="12.185" width="0.254" layer="21"/>
 <wire x1="0" y1="12.72" x2="0" y2="11.65" width="0.254" layer="21"/>
-<wire x1="-0.535" y1="-7.36" x2="0.535" y2="-7.36" width="0.254" layer="21"/>
-<pad name="+" x="0" y="14" drill="0.9" diameter="1.9304" shape="octagon"/>
-<pad name="-" x="0" y="-5.7" drill="0.9" diameter="1.9304" shape="square"/>
+<wire x1="-0.535" y1="-7.56" x2="0.535" y2="-7.56" width="0.254" layer="21"/>
+<pad name="+" x="0" y="14" drill="0.9" diameter="1.9304" shape="square"/>
+<pad name="-" x="0" y="-6" drill="0.9" diameter="1.9304" shape="octagon"/>
 <text x="-2.84" y="6.26" size="1.27" layer="21" ratio="10">&gt;NAME</text>
 <text x="3.375" y="3.48" size="1.27" layer="21" ratio="10" rot="R180">&gt;VALUE</text>
 <text x="-2.821" y="-3.45" size="1.27" layer="21" ratio="10">Lit.3V</text>
