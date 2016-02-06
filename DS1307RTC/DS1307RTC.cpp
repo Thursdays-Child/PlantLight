@@ -2,211 +2,163 @@
 // Released to the public domain! Enjoy!
 // Modified to use a private: USI_TWI &busI2C reference at the I2C bus
 // from the application. Static method removed to use the class members.
+// .......
 
 #include <DS1307RTC.h>
+#include <TinyWireM.h>
 
-////////////////////////////////////////////////////////////////////////////////
-// utility code, some of this could be exposed in the DateTime API if needed
-
-static const uint8_t daysInMonth [] PROGMEM = { 31,28,31,30,31,30,31,31,30,31,30,31 };
-
-// number of days since 2000/01/01, valid for 2001..2099
-static uint16_t date2days(uint16_t y, uint8_t m, uint8_t d) {
-    if (y >= 2000)
-        y -= 2000;
-    uint16_t days = d;
-    for (uint8_t i = 1; i < m; ++i)
-        days += pgm_read_byte(daysInMonth + i - 1);
-    if (m > 2 && y % 4 == 0)
-        ++days;
-    return days + 365 * y + (y + 3) / 4 - 1;
+RTC_DS1307::RTC_DS1307(USI_TWI &bus) :
+    busI2C(bus) {
 }
 
-static long time2long(uint16_t days, uint8_t h, uint8_t m, uint8_t s) {
-    return ((days * 24L + h) * 60 + m) * 60 + s;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// DateTime implementation - ignores time zones and DST changes
-// NOTE: also ignores leap seconds, see http://en.wikipedia.org/wiki/Leap_second
-
-DateTime::DateTime (uint32_t t) {
-  t -= SECONDS_FROM_1970_TO_2000;    // bring to 2000 timestamp from 1970
-
-    ss = t % 60;
-    t /= 60;
-    mm = t % 60;
-    t /= 60;
-    hh = t % 24;
-    uint16_t days = t / 24;
-    uint8_t leap;
-    for (yOff = 0; ; ++yOff) {
-        leap = yOff % 4 == 0;
-        if (days < (uint16_t) 365  + leap)
-            break;
-        days -= 365 + leap;
-    }
-    for (m = 1; ; ++m) {
-        uint8_t daysPerMonth = pgm_read_byte(daysInMonth + m - 1);
-        if (leap && m == 2)
-            ++daysPerMonth;
-        if (days < daysPerMonth)
-            break;
-        days -= daysPerMonth;
-    }
-    d = days + 1;
-}
-
-DateTime::DateTime (uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
-    if (year >= 2000)
-        year -= 2000;
-    yOff = year;
-    m = month;
-    d = day;
-    hh = hour;
-    mm = min;
-    ss = sec;
-}
-
-static uint8_t conv2d(const char* p) {
-    uint8_t v = 0;
-    if ('0' <= *p && *p <= '9')
-        v = *p - '0';
-    return 10 * v + *++p - '0';
-}
-
-// A convenient constructor for using "the compiler's time":
-//   DateTime now (__DATE__, __TIME__);
-// NOTE: using PSTR would further reduce the RAM footprint
-DateTime::DateTime (const char* date, const char* time) {
-    // sample input: date = "Dec 26 2009", time = "12:34:56"
-    yOff = conv2d(date + 9);
-    // Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec 
-    switch (date[0]) {
-        case 'J': m = date[1] == 'a' ? 1 : m = date[2] == 'n' ? 6 : 7; break;
-        case 'F': m = 2; break;
-        case 'A': m = date[2] == 'r' ? 4 : 8; break;
-        case 'M': m = date[2] == 'r' ? 3 : 5; break;
-        case 'S': m = 9; break;
-        case 'O': m = 10; break;
-        case 'N': m = 11; break;
-        case 'D': m = 12; break;
-    }
-    d = conv2d(date + 4);
-    hh = conv2d(time);
-    mm = conv2d(time + 3);
-    ss = conv2d(time + 6);
-}
-
-uint8_t DateTime::dayOfWeek() const {    
-    uint16_t day = date2days(yOff, m, d);
-    return (day + 6) % 7; // Jan 1, 2000 is a Saturday, i.e. returns 6
-}
-
-uint32_t DateTime::unixtime(void) const {
-  uint32_t t;
-  uint16_t days = date2days(yOff, m, d);
-  t = time2long(days, hh, mm, ss);
-  t += SECONDS_FROM_1970_TO_2000;  // seconds from 1970 to 2000
-
-  return t;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// RTC_DS1307 implementation
-
-static uint8_t bcd2bin (uint8_t val) { return val - 6 * (val >> 4); }
-static uint8_t bin2bcd (uint8_t val) { return val + 6 * (val / 10); }
-
-RTC_DS1307::RTC_DS1307(USI_TWI &bus): busI2C(bus) {
-}
-
-uint8_t RTC_DS1307::begin(void) {
-  return 1;
-}
+// ##############################################################################
+// PUBLIC FUNCTIONS
 
 uint8_t RTC_DS1307::isrunning(void) {
-  byte i = 0;
   busI2C.beginTransmission(DS1307_ADDRESS);
-  busI2C.send(i);
+  busI2C.send(0x00);
   busI2C.endTransmission();
 
   busI2C.requestFrom(DS1307_ADDRESS, 1);
   uint8_t ss = busI2C.receive();
-  return !(ss>>7);
+  return !(ss >> 7);
 }
 
-void RTC_DS1307::adjust(const DateTime& dt) {
-	byte i = 0;
-    busI2C.beginTransmission(DS1307_ADDRESS);
-    busI2C.send(i);
-    busI2C.send(bin2bcd(dt.second()));
-    busI2C.send(bin2bcd(dt.minute()));
-    busI2C.send(bin2bcd(dt.hour()));
-    busI2C.send(bin2bcd(0));
-    busI2C.send(bin2bcd(dt.day()));
-    busI2C.send(bin2bcd(dt.month()));
-    busI2C.send(bin2bcd(dt.year() - 2000));
-    busI2C.send(i);
-    busI2C.endTransmission();
-}
-
-void RTC_DS1307::sqw(int sqw) 
-{
-    busI2C.beginTransmission(DS1307_ADDRESS);
-	busI2C.send(7);
-	switch (sqw)
-	{
-		case 0:
-			busI2C.send(0x80);	//Led spento
-			break;
-		case 1:
-			busI2C.send(0x10);	//Frequenza 1Hz
-			break;
-		case 2:
-			busI2C.send(0x11);	//Frequenza 4096kHz
-			break;
-		case 3:
-			busI2C.send(0x12);	//Frequenza 8192kHz
-			break;
-		case 4:	
-			busI2C.send(0x13);	//Frequenza 32768kHz
-			break;
-	}
-    busI2C.endTransmission();
-}
-
-
-
-DateTime RTC_DS1307::now() {
-  byte i = 0;
+void RTC_DS1307::sqw(int sqw) {
   busI2C.beginTransmission(DS1307_ADDRESS);
-  busI2C.send(i);
+  busI2C.send(0x07);
+  switch (sqw) {
+    case 0:
+      busI2C.send(0x80); // Off
+      break;
+    case 1:
+      busI2C.send(0x10); // Frequency 1Hz
+      break;
+    case 2:
+      busI2C.send(0x11); // Frequency 4096kHz
+      break;
+    case 3:
+      busI2C.send(0x12); // Frequency 8192kHz
+      break;
+    case 4:
+      busI2C.send(0x13); // Frequency 32768kHz
+      break;
+  }
   busI2C.endTransmission();
-  
-  busI2C.requestFrom(DS1307_ADDRESS, 7);
-  uint8_t ss = bcd2bin(busI2C.receive() & 0x7F);
-  uint8_t mm = bcd2bin(busI2C.receive());
-  uint8_t hh = bcd2bin(busI2C.receive());
-  busI2C.receive();
-  uint8_t d = bcd2bin(busI2C.receive());
-  uint8_t m = bcd2bin(busI2C.receive());
-  uint16_t y = bcd2bin(busI2C.receive()) + 2000;
-  
-  return DateTime (y, m, d, hh, mm, ss);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// RTC_Millis implementation
-
-long RTC_Millis::offset = 0;
-
-void RTC_Millis::adjust(const DateTime& dt) {
-    offset = dt.unixtime() - millis() / 1000;
+time_t RTC_DS1307::get() // Acquire data from buffer and convert to time_t
+{
+  tmElements_t tm;
+  read(tm);
+  return (makeTime(tm));
 }
 
-DateTime RTC_Millis::now() {
-  return (uint32_t)(offset + millis() / 1000);
+void RTC_DS1307::set(const time_t &t) {
+  tmElements_t tm;
+  breakTime(t, tm);
+  tm.Second |= 0x80; // stop the clock
+  write(tm);
+  tm.Second &= 0x7f; // start the clock
+  write(tm);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// Aquire data from the RTC chip in BCD format
+void RTC_DS1307::read(tmElements_t &tm) {
+  busI2C.beginTransmission(DS1307_ADDRESS);
+  busI2C.send(0x00);
+  busI2C.endTransmission();
+
+  // request the 7 data fields   (secs, min, hr, dow, date, mth, yr)
+  busI2C.requestFrom(DS1307_ADDRESS, tmNbrFields);
+  tm.Second = bcd2dec(busI2C.receive() & 0x7f);
+  tm.Minute = bcd2dec(busI2C.receive());
+  tm.Hour = bcd2dec(busI2C.receive() & 0x3f); // mask assumes 24hr clock
+  tm.Wday = bcd2dec(busI2C.receive());
+  tm.Day = bcd2dec(busI2C.receive());
+  tm.Month = bcd2dec(busI2C.receive());
+  tm.Year = y2kYearToTm((bcd2dec(busI2C.receive())));
+}
+
+void RTC_DS1307::write(tmElements_t &tm) {
+  busI2C.beginTransmission(DS1307_ADDRESS);
+
+  busI2C.send(0x00); // reset register pointer
+  busI2C.send(dec2bcd(tm.Second));
+  busI2C.send(dec2bcd(tm.Minute));
+  busI2C.send(dec2bcd(tm.Hour)); // sets 24 hour format
+  busI2C.send(dec2bcd(tm.Wday));
+  busI2C.send(dec2bcd(tm.Day));
+  busI2C.send(dec2bcd(tm.Month));
+  busI2C.send(dec2bcd(tmYearToY2k(tm.Year)));
+  busI2C.endTransmission();
+}
+
+// ##############################################################################
+// new function not in original DS1307RC.cpp
+tmDriftInfo RTC_DS1307::read_DriftInfo() {
+  tmDriftInfo t;
+  t.DriftStart = 0;
+  t.DriftDays = 0;
+  t.DriftSeconds = 0;
+
+  busI2C.beginTransmission(DS1307_ADDRESS);
+
+  busI2C.send(0x08);
+  busI2C.endTransmission();
+
+  //
+  busI2C.requestFrom(DS1307_ADDRESS, 8);
+
+  //  t = busI2C.receive();
+  t.DriftStart = busI2C.receive();
+  t.DriftStart = t.DriftStart << 8;
+  t.DriftStart = t.DriftStart | busI2C.receive();
+  t.DriftStart = t.DriftStart << 8;
+  t.DriftStart = t.DriftStart | busI2C.receive();
+  t.DriftStart = t.DriftStart << 8;
+  t.DriftStart = t.DriftStart | busI2C.receive();
+
+  t.DriftDays = t.DriftDays | busI2C.receive();
+  t.DriftDays = t.DriftDays << 8;
+  t.DriftDays = t.DriftDays | busI2C.receive();
+
+  t.DriftSeconds = t.DriftSeconds | busI2C.receive();
+  t.DriftSeconds = t.DriftSeconds << 8;
+  t.DriftSeconds = t.DriftSeconds | busI2C.receive();
+  return t;
+}
+
+// ##############################################################################
+// new function not in original DS1307RC.cpp
+void RTC_DS1307::write_DriftInfo(tmDriftInfo di) {
+  busI2C.beginTransmission(DS1307_ADDRESS);
+
+  busI2C.send(0x08); // set register pointer
+  busI2C.send((di.DriftStart >> 24) & 0xff);
+  busI2C.send((di.DriftStart >> 16) & 0xff);
+  busI2C.send((di.DriftStart >> 8) & 0xff);
+  busI2C.send(di.DriftStart & 0xff);
+
+  busI2C.send((di.DriftDays >> 8) & 0xff);
+  busI2C.send(di.DriftDays & 0xff);
+
+  busI2C.send((di.DriftSeconds >> 8) & 0xff);
+  busI2C.send(di.DriftSeconds & 0xff);
+
+  busI2C.endTransmission();
+}
+
+// ##############################################################################
+// PRIVATE FUNCTIONS
+
+// Convert Decimal to Binary Coded Decimal (BCD)
+uint8_t RTC_DS1307::dec2bcd(uint8_t num) {
+  return ((num / 10 * 16) + (num % 10));
+}
+
+// Convert Binary Coded Decimal (BCD) to Decimal
+uint8_t RTC_DS1307::bcd2dec(uint8_t num) {
+  return ((num / 16 * 10) + (num % 16));
+}
+
