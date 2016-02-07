@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.5
+ * VERSION 0.55
  */
 
 #include <avr/sleep.h>
@@ -33,7 +33,7 @@
 #define CMD_MAN_IN              1       // Manual light switch
 #define WD_TICK_TIME            8       // Watchdog tick time [s] (check WD_MODE or datasheet)
 #define WD_WAIT_TIME           16       // Time [s] to count between two sensor read
-#define SAMPLE_COUNT            7       // Light sample count (average measurement)
+#define SAMPLE_COUNT            5       // Light sample count (average measurement)
 
 
 // ####################### Prototypes #######################
@@ -53,12 +53,16 @@ time_t timeProvider();
 // Display a date in readable format on the serial interface
 void SerialDisplayDateTime(const time_t &timeToDisplay);
 
-// Sets the RTC to the des time
+// Sets the RTC to the new time
 void setTime();
 
-// Automatic management of light depending on actual lux value
-// and time of day / month of the year
-void automaticMode(float lux, const time_t &now);
+// Checks the current time of day and month of the year.
+// Returns true if the light is now enabled.
+boolean checkEnable(const time_t &now);
+
+// Checks actual lux value. Returns true if the conditions
+// to turn lights on are met.
+boolean checkLightCond(float lux);
 
 // Sample some lux value and calculate the average over time
 // count: number of sample to calculate the average value
@@ -86,8 +90,8 @@ volatile uint8_t wdCount = 0;
 // wd count * wd interval == 4 * 8 s = 32 s
 uint16_t wdMatch = 0;
 boolean relayState = false, first = false;
-float lux = 0.0;
 
+// ####################### Functions ########################
 
 void setupWatchdog(float tick) {
   // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
@@ -175,26 +179,59 @@ void setTime() {
 
 float sample(int count){
   BH1750.wakeUp(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
-  delay(50);
+  delay(400);
   float tmpLux = 0.0;
   for (int i = 0; i < count; ++i) {
     tmpLux += BH1750.getLightIntensity();       // Get lux value
     delay(300);
   }
-  lux = tmpLux / count;                         // Compute lux average value
-  Serial.println(lux);
-  return lux;
+  return tmpLux / count;                        // Compute lux average value
 }
 
-void automaticMode(float lux, const time_t &now) {
-  // TODO light on conditions.. time and lux
+boolean checkEnable(const time_t &now) {
+  int nowH = hour(now);
 
-  if (lux <= 10) {
-    relayState = true;
-  } else {
-    relayState = false;
+  switch (month(now)) {
+    // Winter
+    case 1:
+    case 2:
+    case 10:
+    case 11:
+    case 12:
+        if (nowH <= 12 || nowH >= 23) {
+          return false;
+        } else {
+          return true;
+        }
+      break;
+
+      // Spring / Autumn
+    case 3:
+    case 4:
+    case 9:
+      return false;
+      break;
+
+    // Summer
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+      return false;
+      break;
+    default:
+      break;
   }
-  digitalWrite(RELAY_SW_OUT, relayState);
+
+ return false;
+}
+
+boolean checkLightCond(float lux) {
+  if (lux <= 10) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void setup() {
@@ -233,19 +270,17 @@ void setup() {
 
   // Update drift info from RTC
   di = RTC.read_DriftInfo();
-  di.DriftDays = 1000; // valid value 0 to 65,535
-  di.DriftSeconds = 18000; // fine tune this until your RTC sync with your reference time, valid value -32,768 to 32,767
-  RTC.write_DriftInfo(di); // once you're happy with the dri
+  di.DriftDays = 1000;
+  di.DriftSeconds = 18000;
+  RTC.write_DriftInfo(di);
 
-//  if (!RTC.isrunning()) {
-//    setTime();
-//  }
+//  setTime();
 }
 
 void loop() {
 
   BH1750.sleep();                       // Send light sensor to sleep
-  systemSleep();                       // Send the unit to sleep
+  systemSleep();                        // Send the unit to sleep
 
 //  time_t timeNow = now();
 //  Serial.print("RTC NOW TIME:       ");
@@ -259,20 +294,22 @@ void loop() {
   if (!digitalRead(CMD_MAN_IN)) {
     digitalWrite(RELAY_SW_OUT, true);
     first = true;
-    wdCount = 0;
   } else  {
-    // First cycle in automatic mode, after manual mode
-    if (first) {
-      first = false;
-      lux = sample(SAMPLE_COUNT);
-      automaticMode(lux, timeNow3);
-    }
+    // first = true -> First cycle in automatic mode, after manual mode
 
-    if (wdCount >= wdMatch) {
+    if (wdCount >= wdMatch || first) {
+      first = false;
       wdCount = 0;
 
-      lux = sample(SAMPLE_COUNT);
-      automaticMode(lux, timeNow3);
+      float lux = sample(SAMPLE_COUNT);
+
+      Serial.println(lux);
+
+      if (checkEnable(timeNow3) && checkLightCond(lux)) {
+        digitalWrite(RELAY_SW_OUT, true);
+      } else {
+        digitalWrite(RELAY_SW_OUT, false);
+      }
     }
   }
 
