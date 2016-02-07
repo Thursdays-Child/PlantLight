@@ -107,10 +107,8 @@ tmDriftInfo RTC_DS1307::read_DriftInfo() {
   busI2C.send(0x08);
   busI2C.endTransmission();
 
-  //
   busI2C.requestFrom(DS1307_ADDRESS, 8);
 
-  //  t = busI2C.receive();
   t.DriftStart = busI2C.receive();
   t.DriftStart = t.DriftStart << 8;
   t.DriftStart = t.DriftStart | busI2C.receive();
