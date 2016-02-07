@@ -136,6 +136,9 @@ ISR(WDT_vect) {
 
 // PCINT Interrupt Service Routine (unused)
 ISR(PCINT0_vect) {
+  // Don't do anything here but we must include this
+  // block of code otherwise the interrupt calls an
+  // uninitialized interrupt handler.
 }
 
 time_t timeProvider() {
@@ -198,14 +201,14 @@ boolean checkEnable(const time_t &now) {
     case 10:
     case 11:
     case 12:
-        if (nowH <= 12 || nowH >= 23) {
+        if (nowH <= 16 || nowH >= 23) {
           return false;
         } else {
           return true;
         }
       break;
 
-      // Spring / Autumn
+    // Spring / Autumn
     case 3:
     case 4:
     case 9:
