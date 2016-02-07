@@ -17,54 +17,139 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.4
+ * VERSION 0.5
  */
+
+#include <avr/sleep.h>
+#include <avr/interrupt.h>
 
 #include <Arduino.h>
 #include <TinyWireM.h>
 #include <Time.h>
-
 #include <BH1750FVI.h>
 #include <DS1307RTC.h>
 
-#define RELAY_SW_OUT               4        // Relay out pin
-#define CMD_MAN_IN                 1        // Manual light switch
+#define RELAY_SW_OUT            4       // Relay out pin
+#define CMD_MAN_IN              1       // Manual light switch
+#define WD_TICK_TIME            8       // Watchdog tick time [s] (check WD_MODE or datasheet)
+#define WD_WAIT_TIME           16       // Time [s] to count between two sensor read
+#define SAMPLE_COUNT            7       // Light sample count (average measurement)
 
-USI_TWI bus;                                // TinyWireM instance (I2C bus)
-BH1750FVI BH1750(bus);                      // Light sensor instance
-RTC_DS1307 RTC(bus);                        // RTC clock instance
 
-long unsigned int startTime = 0;
+// ####################### Prototypes #######################
+
+// Setup watchdog wakeup interrupt
+// tick: watchdog tick time [s] (check WD_MODE or datasheet)
+void setupWatchdog(float tick);
+
+// Set system into the sleep state,
+// system wakes up when watchdog is timed out
+void systemSleep();
+
+// Provides a time_t to Time library, wrapper for call
+// to RTC.get(), which is not a static function (class member)
+time_t timeProvider();
+
+// Display a date in readable format on the serial interface
+void SerialDisplayDateTime(const time_t &timeToDisplay);
+
+// Sets the RTC to the des time
+void setTime();
+
+// Automatic management of light depending on actual lux value
+// and time of day / month of the year
+void automaticMode(float lux, const time_t &now);
+
+// Sample some lux value and calculate the average over time
+// count: number of sample to calculate the average value
+float sample(int count);
+
+
+// ####################### Constants ########################
+
+// Watchdog interrupt sleep time
+// 0=16ms, 1=32ms, 2=64ms, 3=128ms, 4=250ms, 5=500ms, 6=1 sec, 7=2 sec, 8=4 sec, 9=8sec
+const float WD_MODE[10] = { 0.016, 0.032, 0.064, 0.128, 0.25, 0.5, 1 , 2, 4, 8 };
+
+
+// ####################### Variables ########################
+
+USI_TWI bus;                            // TinyWireM instance (I2C bus)
+BH1750FVI BH1750(bus);                  // Light sensor instance
+RTC_DS1307 RTC(bus);                    // RTC clock instance
+
 tmDriftInfo di;
+
+volatile uint8_t wdCount = 0;
+
+// Watchdog interrupt count before reading light value
+// wd count * wd interval == 4 * 8 s = 32 s
+uint16_t wdMatch = 0;
+boolean relayState = false, first = false;
+float lux = 0.0;
+
+
+void setupWatchdog(float tick) {
+  // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
+  // 6=1 sec,7=2 sec, 8=4 sec, 9= 8sec
+  uint8_t wdreg, wdmode = 0;
+
+  for (uint8_t i = 0; i < 10; ++i) {
+    if (WD_MODE[i] == tick) {
+      wdmode = i;
+    }
+  }
+
+  if (wdmode > 9)
+    wdmode = 9;
+  wdreg = wdmode & 7;
+
+  if (wdmode > 7)
+    wdreg |= (1 << 5);
+  wdreg |= (1 << WDCE);
+
+  MCUSR &= ~(1 << WDRF);
+
+  // Start timed sequence
+  WDTCR |= (1 << WDCE) | (1 << WDE);
+
+  // Set new watchdog timeout value
+  WDTCR = wdreg;
+  WDTCR |= _BV(WDIE);
+}
+
+void systemSleep() {
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);  // Sleep mode is set here
+  sleep_enable();
+  sleep_mode();                         // System actually sleeps here
+  sleep_disable();                      // System continues execution here when watchdog timed out
+}
+
+// Watchdog Interrupt Service Routine
+ISR(WDT_vect) {
+  wdCount++;
+}
+
+// PCINT Interrupt Service Routine (unused)
+ISR(PCINT0_vect) {
+}
 
 time_t timeProvider() {
   return RTC.get();
 }
 
-void printDigits(int digits) {
-  // Utility function for digital clock display: prints preceding colon and leading 0
-  Serial.print(":");
-  if (digits < 10)
-    Serial.print('0');
-  Serial.print(digits);
-}
-
-void SerialDisplayDateTime(time_t timeToDisplay) {
+void SerialDisplayDateTime(const time_t &timeToDisplay) {
   Serial.print(year(timeToDisplay));
   Serial.print("/");
   Serial.print(month(timeToDisplay));
   Serial.print("/");
   Serial.print(day(timeToDisplay));
   Serial.print(" ");
-  Serial.print(hourFormat12(timeToDisplay));
-  printDigits(minute(timeToDisplay));
-  printDigits(second(timeToDisplay));
-  if (isAM(timeToDisplay)) {
-    Serial.print(" AM ");
-  } else {
-    Serial.print(" PM ");
-  }
-  Serial.println(weekday(timeToDisplay));
+  Serial.print(hour(timeToDisplay));
+  Serial.print(":");
+  Serial.print(minute(timeToDisplay));
+  Serial.print(":");
+  Serial.println(second(timeToDisplay));
 }
 
 void setTime() {
@@ -73,41 +158,43 @@ void setTime() {
 
   tme.Year = 46;
   tme.Month = 2;
-  tme.Day = 06;
-  tme.Hour = 00;
-  tme.Minute = 00;
+  tme.Day = 07;
+  tme.Hour = 14;
+  tme.Minute = 28;
   tme.Second = 30;
   newTime = makeTime(tme);
-  RTC.set(newTime); // set the RTC and the system time to the received value
-  setTime(newTime);
+  RTC.set(newTime);                             // Set the RTC
+  setTime(newTime);                             // Set the system time
 
-  tmDriftInfo diUpdate = RTC.read_DriftInfo(); // update DriftInfo in RTC
+  tmDriftInfo diUpdate = RTC.read_DriftInfo();  // Update DriftInfo in RTC
   diUpdate.DriftStart = newTime;
   RTC.write_DriftInfo(diUpdate);
 
-  Serial.print("RTC Set to: ");
   SerialDisplayDateTime(newTime);
 }
 
-void getDriftInfo() {
-//  di = RTC.read_DriftInfo();
-//  Serial.println("");
-//  if (di.DriftStart == 0 || di.DriftDays == 0 || di.DriftSeconds == 0) {
-//    Serial.println("DriftInfo not set yet!");
-//  }
-//  Serial.println("*** DriftInfo Read from RTC Memory ***");
-//  Serial.print("DriftStart   : ");
-//  SerialDisplayDateTime(di.DriftStart);
-//  Serial.print("DriftDays    : ");
-//  Serial.println(di.DriftDays);
-//  Serial.print("DriftSeconds : ");
-//  Serial.println(di.DriftSeconds);
-//  Serial.print("Day(s) since drift start: ");
-//  Serial.println(float(now() - di.DriftStart) / float(SECS_PER_DAY));
-//  long tmp = now() - di.DriftStart;
-//  tmp *= di.DriftSeconds;
-//  Serial.print("Your RTC has Drifted(seconds): ");
-//  Serial.println(float(tmp) / float(SECS_PER_DAY * di.DriftDays));
+float sample(int count){
+  BH1750.wakeUp(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
+  delay(50);
+  float tmpLux = 0.0;
+  for (int i = 0; i < count; ++i) {
+    tmpLux += BH1750.getLightIntensity();       // Get lux value
+    delay(300);
+  }
+  lux = tmpLux / count;                         // Compute lux average value
+  Serial.println(lux);
+  return lux;
+}
+
+void automaticMode(float lux, const time_t &now) {
+  // TODO light on conditions.. time and lux
+
+  if (lux <= 10) {
+    relayState = true;
+  } else {
+    relayState = false;
+  }
+  digitalWrite(RELAY_SW_OUT, relayState);
 }
 
 void setup() {
@@ -115,6 +202,21 @@ void setup() {
 
   pinMode(RELAY_SW_OUT, OUTPUT);
   pinMode(CMD_MAN_IN, INPUT_PULLUP);
+
+  // Setup watchdog timeout to 8 s (mode 9)
+  setupWatchdog(WD_TICK_TIME);
+
+  // Watchdog interrupt count before reading light value
+  // wd count * wd interval == 4 * 8 s = 32 s
+  wdMatch = (uint16_t) WD_WAIT_TIME / WD_TICK_TIME;
+
+  // Setup Pin change interrupt on PCINT1
+  GIMSK |= _BV(PCIE);
+  PCMSK |= _BV(PCINT1);
+
+  // Set the internal registers to reduce power consumes
+  ACSR   = (1 << ACD);                  // Shut down the analog comparator
+  MCUCR |= (1 << BODS);                 // BOD disabled
 
   // I2C begin() is called BEFORE sensors library "begin" methods:
   // it is called just once for all the sensors.
@@ -124,72 +226,54 @@ void setup() {
   // Light sensor
   BH1750.powerOn();
   BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
-  BH1750.setMtreg(250);
+  BH1750.setMtreg(250);                 // Set measurement time register to high value
 
   // Real time clock
-  setSyncProvider(timeProvider); // the function to get the time from the RTC
-//  if (timeStatus() != timeSet)
-//    Serial.println("Unable to sync with the RTC");
-//  else Serial.println("RTC has set the system time");
+  setSyncProvider(timeProvider);        // Pointer to function to get the time from the RTC
 
+  // Update drift info from RTC
   di = RTC.read_DriftInfo();
   di.DriftDays = 1000; // valid value 0 to 65,535
   di.DriftSeconds = 18000; // fine tune this until your RTC sync with your reference time, valid value -32,768 to 32,767
   RTC.write_DriftInfo(di); // once you're happy with the dri
 
-  RTC.sqw(0);
-  if (!RTC.isrunning()) {
-    setTime();
-  }
-
-  startTime = millis();
+//  if (!RTC.isrunning()) {
+//    setTime();
+//  }
 }
 
-boolean relayState = 0;
-float lux = 0;
-
-uint8_t btnInCounter = 0;
-
 void loop() {
+
+  BH1750.sleep();                       // Send light sensor to sleep
+  systemSleep();                       // Send the unit to sleep
+
+//  time_t timeNow = now();
+//  Serial.print("RTC NOW TIME:       ");
+//  SerialDisplayDateTime(timeNow);
+
+  time_t timeNow3 = now3(di);
+//  Serial.print("RTC NOW3 TIME:      ");
+  SerialDisplayDateTime(timeNow3);
+
+  // Manual command to turn light on
   if (!digitalRead(CMD_MAN_IN)) {
-    if (btnInCounter < 10) {
-      btnInCounter++;
-    }
-  } else {
-    btnInCounter = 0;
-  }
-
-  if (millis() - startTime >= 1000) {
-    startTime = millis();
-
-    lux = BH1750.getLightIntensity(); // Get lux value
-
-//    getDriftInfo();
-    di = RTC.read_DriftInfo();
-
-    time_t timeNow = now();
-    time_t timeNow3 = now3(di);
-
-    Serial.print("RTC NOW TIME:       ");
-    SerialDisplayDateTime(timeNow);
-
-    Serial.print("RTC NOW3 TIME:      ");
-    SerialDisplayDateTime(timeNow3);
-
-    Serial.print("LUX: ");
-    Serial.println(lux);
-
-    Serial.println("");
-    Serial.println("");
-
-    if (btnInCounter >= 10) {
-      relayState = true;
-    } else if (lux <= 10) {
-      relayState = true;
-    } else {
-      relayState = false;
+    digitalWrite(RELAY_SW_OUT, true);
+    first = true;
+    wdCount = 0;
+  } else  {
+    // First cycle in automatic mode, after manual mode
+    if (first) {
+      first = false;
+      lux = sample(SAMPLE_COUNT);
+      automaticMode(lux, timeNow3);
     }
 
-    digitalWrite(RELAY_SW_OUT, relayState);
+    if (wdCount >= wdMatch) {
+      wdCount = 0;
+
+      lux = sample(SAMPLE_COUNT);
+      automaticMode(lux, timeNow3);
+    }
   }
+
 }
