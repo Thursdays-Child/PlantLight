@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.55
+ * VERSION 0.6
  */
 
 #include <avr/sleep.h>
@@ -51,6 +51,7 @@ void systemSleep();
 time_t timeProvider();
 
 // Display a date in readable format on the serial interface
+void printDigits(int digits);
 void SerialDisplayDateTime(const time_t &timeToDisplay);
 
 // Sets the RTC to the new time
@@ -73,7 +74,7 @@ float sample(int count);
 
 // Watchdog interrupt sleep time
 // 0=16ms, 1=32ms, 2=64ms, 3=128ms, 4=250ms, 5=500ms, 6=1 sec, 7=2 sec, 8=4 sec, 9=8sec
-const float WD_MODE[10] = { 0.016, 0.032, 0.064, 0.128, 0.25, 0.5, 1 , 2, 4, 8 };
+const float WD_MODE[10] = { 0.016, 0.032, 0.064, 0.128, 0.25, 0.5, 1, 2, 4, 8 };
 
 
 // ####################### Variables ########################
@@ -145,18 +146,26 @@ time_t timeProvider() {
   return RTC.get();
 }
 
+void printDigits(int digits) {
+  // Utility function for digital clock display: prints preceding colon and leading 0
+  if (digits < 10)
+    Serial.print('0');
+  Serial.print(digits);
+}
+
 void SerialDisplayDateTime(const time_t &timeToDisplay) {
+  printDigits(day(timeToDisplay));
+  Serial.print("/");
+  printDigits(month(timeToDisplay));
+  Serial.print("/");
   Serial.print(year(timeToDisplay));
-  Serial.print("/");
-  Serial.print(month(timeToDisplay));
-  Serial.print("/");
-  Serial.print(day(timeToDisplay));
   Serial.print(" ");
-  Serial.print(hour(timeToDisplay));
+  printDigits(hour(timeToDisplay));
   Serial.print(":");
-  Serial.print(minute(timeToDisplay));
+  printDigits(minute(timeToDisplay));
   Serial.print(":");
-  Serial.println(second(timeToDisplay));
+  printDigits(second(timeToDisplay));
+  Serial.print(" ");
 }
 
 void setTime() {
@@ -165,10 +174,10 @@ void setTime() {
 
   tme.Year = 46;
   tme.Month = 2;
-  tme.Day = 07;
-  tme.Hour = 14;
-  tme.Minute = 28;
-  tme.Second = 30;
+  tme.Day = 13;
+  tme.Hour = 19;
+  tme.Minute = 04;
+  tme.Second = 00;
   newTime = makeTime(tme);
   RTC.set(newTime);                             // Set the RTC
   setTime(newTime);                             // Set the system time
@@ -276,12 +285,9 @@ void setup() {
   di.DriftDays = 1000;
   di.DriftSeconds = 18000;
   RTC.write_DriftInfo(di);
-
-//  setTime();
 }
 
 void loop() {
-
   BH1750.sleep();                       // Send light sensor to sleep
   systemSleep();                        // Send the unit to sleep
 
@@ -289,12 +295,12 @@ void loop() {
 //  Serial.print("RTC NOW TIME:       ");
 //  SerialDisplayDateTime(timeNow);
 
-  time_t timeNow3 = now3(di);
-//  Serial.print("RTC NOW3 TIME:      ");
-  SerialDisplayDateTime(timeNow3);
-
   // Manual command to turn light on
   if (!digitalRead(CMD_MAN_IN)) {
+    if (!first) {
+      // Used only once to set the time
+      // setTime();
+    }
     digitalWrite(RELAY_SW_OUT, true);
     first = true;
   } else  {
@@ -305,6 +311,13 @@ void loop() {
       wdCount = 0;
 
       float lux = sample(SAMPLE_COUNT);
+
+      time_t timeNow3 = now3(di);
+
+#ifdef DEBUG
+      //  Serial.print("RTC NOW3 TIME:      ");
+      SerialDisplayDateTime(timeNow3);
+#endif
 
       Serial.println(lux);
 
