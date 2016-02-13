@@ -69,12 +69,13 @@ void setup() {
   logFile = SD.open("lightlog.txt", FILE_WRITE);
 
   // if the file opened okay, write to it:
-  if (!logFile) {
+  if (logFile)
+    logOk = true;
+  else {
     // if the file didn't open, print an error:
     Serial.println("Error opening file!");
   }
 
-  logOk = true;
 }
 
 void loop() {
