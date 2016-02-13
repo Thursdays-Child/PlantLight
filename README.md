@@ -1,6 +1,6 @@
 # PLANT LIGHT 
 ### Automatic light switch based on light sensor and date/time
-**version 0.55**
+**version 0.6**
 
 The project is an automatic switch for 2 LED lamps used to illuminate 
 some plants in my house. On board there is a real time clock, to keep track of 
