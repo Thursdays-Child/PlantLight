@@ -27,7 +27,7 @@
 
 static tmElements_t tm;          // a cache of time elements
 static time_t       cacheTime;   // the time the cache was updated
-static time_t       syncInterval = 30;  // time sync will be attempted after this many seconds
+static time_t       syncInterval = 300;  // time sync will be attempted after this many seconds
 
 void refreshCache( time_t t){
   if( t != cacheTime)
@@ -220,102 +220,64 @@ time_t makeTime(tmElements_t &tm){
   seconds+= tm.Second;
   return seconds; 
 }
+
 /*=====================================================*/	
 /* Low level system time functions  */
 
 static time_t sysTime = 0;
-static time_t prevMillis = 0;
 static time_t nextSyncTime = 0;
 static timeStatus_t Status = timeNotSet;
+static tmDriftInfo driftInfo;
 
 getExternalTime getTimePtr;  // pointer to external sync function
-//setExternalTime setTimePtr; // not used in this version
 
-#ifdef TIME_DRIFT_INFO   // define this to get drift data
-time_t sysUnsyncedTime = 0; // the time sysTime unadjusted by sync
-#endif
+tmDriftInfo getDriftInfo() {
+  return driftInfo;
+}
+
+void setDriftInfo(tmDriftInfo di){
+  driftInfo = di;
+}
 
 time_t now(){
-  while( millis() - prevMillis >= 1000){      
-    sysTime++;
-    prevMillis += 1000;	
-#ifdef TIME_DRIFT_INFO
-    sysUnsyncedTime++; // this can be compared to the synced time to measure long term drift
-#endif	
-  }
-  if(nextSyncTime <= sysTime){
-	if(getTimePtr != 0){
-	  time_t t = getTimePtr();
-      if( t != 0)
-        setTime(t);
-      else
-        Status = (Status == timeNotSet) ?  timeNotSet : timeNeedsSync;        
-    }
-  }  
-  return sysTime;
-}
-
-time_t now2(tmDriftInfo di){
-  // new function not in original Time.cpp
-  // this function returns drift corrected system time.
-  // time returned by this function can be up to 1 second behind RTC time
-  // depending on when RTC was read.
-  // also due to rounding error another +/- 0.5sec is introduced.
-  // use now3() when doing drift calibration for most consistent time.
-  while( millis() - prevMillis >= 1000){      
-    sysTime++;
-    prevMillis += 1000;	
-#ifdef TIME_DRIFT_INFO
-    sysUnsyncedTime++; // this can be compared to the synced time to measure long term drift
-#endif	
-  }
-  if(nextSyncTime <= sysTime){
-	if(getTimePtr != 0){
-	  time_t t = getTimePtr();
-      if( t != 0)
-        setTime(t);
-      else
-        Status = (Status == timeNotSet) ?  timeNotSet : timeNeedsSync;        
-    }
-  }  
-
-  float driftCorrection = sysTime - di.DriftStart;
-  driftCorrection /= float(SECS_PER_DAY * di.DriftDays);
-  driftCorrection *= float(di.DriftSeconds);
-
-  return sysTime - long(driftCorrection); // due to conversion of driftCorrection to long, accuracy of time returned is +/- 0.5sec
-}
-
-time_t now3(tmDriftInfo di){
   // new function not in original Time.cpp
   // this function returns drift corrected RTC time.
   // use now2() if you want to reduce amount of I2C communication
   // use this function to get actual time from RTC for Drift callibration purpose
   // due to rounding error +/- 0.5sec is introduced.
+
+  if (getTimePtr == 0) {
+    return 0;
+  }
+
   time_t rtcTime = getTimePtr();
   
-  float driftCorrection = float(rtcTime - di.DriftStart);
-  driftCorrection /= float(SECS_PER_DAY * di.DriftDays);
-  driftCorrection *= float(di.DriftSeconds);
-    
-  return rtcTime - long(driftCorrection); // due to conversion of driftCorrection to long, accuracy of time returned is +/- 0.5sec
+  float driftCorrection = float(rtcTime - driftInfo.DriftStart);
+  driftCorrection /= float(SECS_PER_DAY * driftInfo.DriftDays);
+  driftCorrection *= float(driftInfo.DriftSeconds);
+
+  // due to conversion of driftCorrection to long, accuracy of time returned is +/- 0.5sec
+  time_t curTime = rtcTime - long(driftCorrection);
+
+  if(nextSyncTime <= curTime){
+    if (curTime != 0)
+      setTime(curTime);
+    else
+      Status = (Status == timeNotSet) ?  timeNotSet : timeNeedsSync;
+  }
+
+  return curTime;
 }
 
 void setTime(time_t t){ 
-#ifdef TIME_DRIFT_INFO
-  if(sysUnsyncedTime == 0)
-    sysUnsyncedTime = t;   // store the time of the first call to set a valid Time
-#endif
-
   sysTime = t;  
   nextSyncTime = t + syncInterval;
   Status = timeSet; 
-  prevMillis = millis();  // restart counting from now (thanks to Korman for this fix)
 } 
 
 void  setTime(int hr,int min,int sec,int dy, int mnth, int yr){
- // year can be given as full four digit year or two digts (2010 or 10 for 2010);  
- //it is converted to years since 1970
+ // year can be given as full four digit year or two digits (2010 or 10 for 2010);
+ // it is converted to years since 1970
   if( yr > 99)
       yr = yr - 1970;
   else

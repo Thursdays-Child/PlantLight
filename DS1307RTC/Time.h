@@ -5,6 +5,11 @@
 /*
   July 3 2011 - fixed elapsedSecsThisWeek macro (thanks Vincent Valdy for this)
               - fixed  daysToTime_t macro (thanks maniacbug)
+
+  Feb 19 2016 - Modified now() functions and some constants to save space for
+                ATTiny85 micro. The system time can't be counted on the micro
+                since in the sleep period the internal millis() timer is off!
+                Sleep mode POWER_DONW
 */     
 
 #ifndef _Time_h
@@ -49,8 +54,6 @@ typedef struct  {
 #define  y2kYearToTm(Y)      ((Y) + 30)   
 
 typedef time_t(*getExternalTime)();
-//typedef void  (*setExternalTime)(const time_t); // not used in this version
-
 
 /*==============================================================================*/
 /* Useful Constants */
@@ -107,23 +110,18 @@ int     month(time_t t);   // the month for the given time
 int     year();            // the full four digit year: (2009, 2010 etc) 
 int     year(time_t t);    // the year for the given time
 
-time_t  now();              // return the current time as seconds since Jan 1 1970 
-time_t  now2(tmDriftInfo di);	// return drift corrected system time
-time_t  now3(tmDriftInfo di);	// return drift corrected RTC time
+time_t  now();	           // return drift corrected RTC time and set as system time
 void    setTime(time_t t);
 void    setTime(int hr,int min,int sec,int day, int month, int yr);
 void    adjustTime(long adjustment);
 
-/* date strings */ 
-#define dt_MAX_STRING_LEN 9 // length of longest date string (excluding terminating null)
-char* monthStr(uint8_t month);
-char* dayStr(uint8_t day);
-char* monthShortStr(uint8_t month);
-char* dayShortStr(uint8_t day);
-	
+/* RTC drift information functions */
+tmDriftInfo getDriftInfo();         // New function: get RTC drift correction info
+void setDriftInfo(tmDriftInfo di);  // New function: set RTC drift correction info
+
 /* time sync functions	*/
 timeStatus_t timeStatus(); // indicates if time has been set and recently synchronized
-void    setSyncProvider( getExternalTime getTimeFunction); // identify the external time provider
+void    setSyncProvider(getExternalTime getTimeFunction); // identify the external time provider
 void    setSyncInterval(time_t interval); // set the number of seconds between re-sync
 
 /* low level functions to convert to and from system time                     */
