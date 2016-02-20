@@ -178,10 +178,10 @@ void setTime() {
 
   tme.Year   = 46;
   tme.Month  = 2;
-  tme.Day    = 19;
-  tme.Hour   = 21;
-  tme.Minute = 07;
-  tme.Second = 00;
+  tme.Day    = 20;
+  tme.Hour   = 17;
+  tme.Minute = 9;
+  tme.Second = 45;
   newTime = makeTime(tme);
   RTC.set(newTime);                             // Set the RTC
   setTime(newTime);                             // Set the system time
