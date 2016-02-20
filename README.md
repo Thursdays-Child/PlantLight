@@ -8,10 +8,10 @@ the actual date and time even on power loss, and the light sensor is placed
 on a separate breakout board. A relay switches the main power (230 V AC) to 
 the LEDs. The micro is an Atmel ATTiny 85V.
 
-The project is compiled for Atmel AVR,  with standard AVR GCC toolchain. 
+The project is compiled for Atmel AVR, with standard AVR GCC toolchain. 
 Eclipse was used to create and compile the projects, with the AVR Plugin.
 
-TODO A makefile is available to compile without Eclispe. 
+A makefile is available to compile without Eclispe. 
 
 This project consists of a main C++ file and some libraries (C/C++):
 
