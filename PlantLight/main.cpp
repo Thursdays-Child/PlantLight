@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.65
+ * VERSION 0.7
  */
 
 #include <avr/sleep.h>
@@ -65,10 +65,12 @@ boolean checkEnable(const time_t &now);
 // to turn lights on are met.
 boolean checkLightCond(float lux);
 
-// Sample some lux value and calculate the average over time
+// Sample some lux value and calculate the running average over time
 float sample();
 
 void printLuxArray();
+void cleanLuxArray();
+
 
 // ####################### Constants ########################
 
@@ -92,6 +94,7 @@ volatile uint8_t wdCount = 0;
 uint16_t wdMatch = 0;
 boolean relayState = false, first = false;
 static float luxSamples[SAMPLE_COUNT] = {};
+static uint8_t readCounter = 0;
 
 // ####################### Functions ########################
 
@@ -191,9 +194,6 @@ void setTime() {
 }
 
 float sample() {
-  BH1750.wakeUp(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
-  delay(300);
-
   float tmpLux = 0.0;
   // Shift left values in sample array
   for (int i = 0; i < SAMPLE_COUNT - 1; ++i) {
@@ -205,14 +205,25 @@ float sample() {
 
   tmpLux += luxSamples[SAMPLE_COUNT - 1];
 
-  return tmpLux / SAMPLE_COUNT;
+  if (readCounter < SAMPLE_COUNT) {
+    readCounter++;
+  }
+
+  return tmpLux / readCounter;
 }
 
 void printLuxArray() {
   for (int i = 0; i < SAMPLE_COUNT; ++i) {
-      Serial.print(luxSamples[i]);
-      Serial.print(" ");
-    }
+    Serial.print(luxSamples[i]);
+    Serial.print(" ");
+  }
+}
+
+void cleanLuxArray() {
+  readCounter = 0;
+  for (int i = 0; i < SAMPLE_COUNT; ++i) {
+    luxSamples[i] = 0.0;
+  }
 }
 
 boolean checkEnable(const time_t &now) {
@@ -314,8 +325,10 @@ void loop() {
       // Used only once to set the time with external input
       // setTime();
       first = true;
+      cleanLuxArray();
+      digitalWrite(RELAY_SW_OUT, true);
     }
-    digitalWrite(RELAY_SW_OUT, true);
+
   } else  {
     // first = true -> First cycle in automatic mode, after manual mode
 
@@ -326,6 +339,9 @@ void loop() {
       time_t timeNow = now();
 
       if (checkEnable(timeNow)) {
+        BH1750.wakeUp(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
+        delay(300);
+
         float lux = sample();
 
 #ifdef DEBUG
@@ -340,6 +356,7 @@ void loop() {
           digitalWrite(RELAY_SW_OUT, false);
         }
       } else {
+        cleanLuxArray();
         digitalWrite(RELAY_SW_OUT, false);
       }
     }
