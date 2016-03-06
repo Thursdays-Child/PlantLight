@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.7
+ * VERSION 0.75
  */
 
 #include <avr/sleep.h>
@@ -32,9 +32,10 @@
 #define RELAY_SW_OUT            4       // Relay out pin
 #define CMD_MAN_IN              1       // Manual light switch
 #define WD_TICK_TIME            8       // Watchdog tick time [s] (check WD_MODE or datasheet)
-#define WD_WAIT_TIME            24      // Time [s] to count between two sensor read
-#define SAMPLE_COUNT            8       // Light sample count (average measurement)
-
+#define WD_WAIT_TIME            16      // Time [s] to count between two sensor read
+#define SAMPLE_COUNT            10      // Light sample count (average measurement)
+#define LUX_TH                  10      // Lux threshold
+#define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
 
 // ####################### Prototypes #######################
 
@@ -76,7 +77,7 @@ void cleanLuxArray();
 
 // Watchdog interrupt sleep time
 // 0=16ms, 1=32ms, 2=64ms, 3=128ms, 4=250ms, 5=500ms, 6=1 sec, 7=2 sec, 8=4 sec, 9=8sec
-const float WD_MODE[10] = { 0.016, 0.032, 0.064, 0.128, 0.25, 0.5, 1, 2, 4, 8 };
+const float WD_MODE[10] = {0.016, 0.032, 0.064, 0.128, 0.25, 0.5, 1, 2, 4, 8};
 
 
 // ####################### Variables ########################
@@ -92,9 +93,10 @@ volatile uint8_t wdCount = 0;
 // Watchdog interrupt count before reading light value
 // wd count * wd interval == 4 * 8 s = 32 s
 uint16_t wdMatch = 0;
-boolean relayState = false, first = false;
+boolean first = false;
 static float luxSamples[SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
+static boolean relayState = false, relayStateMem = false;
 
 // ####################### Functions ########################
 
@@ -229,47 +231,38 @@ void cleanLuxArray() {
 boolean checkEnable(const time_t &now) {
   int nowH = hour(now);
 
-  switch (month(now)) {
-    // Winter
-    case 1:
-    case 2:
-    case 10:
-    case 11:
-    case 12:
-        if (nowH <= 16 || nowH >= 23) {
-          return false;
-        } else {
-          return true;
-        }
-      break;
-
-    // Spring / Autumn
-    case 3:
-    case 4:
-    case 9:
-      return false;
-      break;
-
-    // Summer
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-      return false;
-      break;
-    default:
-      break;
+  if (nowH <= 16 || nowH >= 23) {
+    return false;
+  } else {
+    return true;
   }
-
- return false;
 }
 
 boolean checkLightCond(float lux) {
-  if (lux <= 10) {
-    return true;
-  } else {
-    return false;
+  int low = 0, high = 0;
+  for (int i = SAMPLE_COUNT / 2 + 1 ; i < SAMPLE_COUNT - 1; ++i) {
+    if (luxSamples[i] <= LUX_TH) {
+      low++;
+    } else {
+      high++;
+    }
   }
+
+  if (readCounter >= SAMPLE_COUNT / 2 + 1) {
+
+    // Turn light on
+    if (high <= 2 && lux <= LUX_TH) {
+      return true;
+    }
+
+    // Turn light off
+    if (relayState && lux <= LUX_TH + LUX_TH_HIST) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return false;
 }
 
 void setup() {
@@ -326,7 +319,8 @@ void loop() {
       // setTime();
       first = true;
       cleanLuxArray();
-      digitalWrite(RELAY_SW_OUT, true);
+      relayState = relayStateMem = true;
+      digitalWrite(RELAY_SW_OUT, relayState);
     }
 
   } else  {
@@ -343,23 +337,27 @@ void loop() {
         delay(300);
 
         float lux = sample();
+        relayState = checkLightCond(lux);
 
 #ifdef DEBUG
         SerialDisplayDateTime(timeNow);
         printLuxArray();
         Serial.print("= ");
-        Serial.println(lux);
+        Serial.print(lux);
+        Serial.print(" ");
+        if (relayState)
+          Serial.println("ON");
+        else Serial.println("OFF");
 #endif
-        if (checkLightCond(lux)) {
-          digitalWrite(RELAY_SW_OUT, true);
-        } else {
-          digitalWrite(RELAY_SW_OUT, false);
+        if (relayState != relayStateMem) {
+          digitalWrite(RELAY_SW_OUT, relayState);
+          relayStateMem = relayState;
         }
       } else {
         cleanLuxArray();
-        digitalWrite(RELAY_SW_OUT, false);
+        relayState = relayStateMem = false;
+        digitalWrite(RELAY_SW_OUT, relayState);
       }
     }
   }
-
 }
