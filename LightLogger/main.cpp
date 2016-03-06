@@ -79,9 +79,9 @@ void setup() {
 }
 
 void loop() {
-  static char buffer[80];
+  static char buffer[160];
 
-  if (readline(tinySerial.read(), buffer, 80) > 0) {
+  if (readline(tinySerial.read(), buffer, 160) > 0) {
     Serial.println(buffer);
 
     if (logOk) {
