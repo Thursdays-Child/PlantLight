@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.75
+ * VERSION 0.8
  */
 
 #include <avr/sleep.h>
@@ -229,13 +229,7 @@ void cleanLuxArray() {
 }
 
 boolean checkEnable(const time_t &now) {
-  int nowH = hour(now);
-
-  if (nowH <= 16 || nowH >= 23) {
-    return false;
-  } else {
-    return true;
-  }
+  return (hour(now) >= 16 && hour(now) <= 22);
 }
 
 boolean checkLightCond(float lux) {
