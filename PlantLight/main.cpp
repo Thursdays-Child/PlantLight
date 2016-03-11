@@ -343,14 +343,15 @@ void loop() {
           Serial.println("ON");
         else Serial.println("OFF");
 #endif
-        if (relayState != relayStateMem) {
-          digitalWrite(RELAY_SW_OUT, relayState);
-          relayStateMem = relayState;
-        }
       } else {
         cleanLuxArray();
-        relayState = relayStateMem = false;
+        relayState = false;
+      }
+
+      // Relay output update
+      if (relayState != relayStateMem) {
         digitalWrite(RELAY_SW_OUT, relayState);
+        relayStateMem = relayState;
       }
     }
   }
