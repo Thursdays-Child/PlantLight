@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.8
+ * VERSION 0.81
  */
 
 #include <avr/sleep.h>
@@ -318,7 +318,8 @@ void loop() {
     }
 
   } else  {
-    // first = true -> First cycle in automatic mode, after manual mode
+    // When first == true the first cycle in automatic mode is executed,
+    // after manual mode
 
     if (wdCount >= wdMatch || first) {
       first = false;
@@ -328,7 +329,10 @@ void loop() {
 
       if (checkEnable(timeNow)) {
         BH1750.wakeUp(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
-        delay(300);
+        // Wait for the sensor to be fully awake.
+        // Less than 500ms is not enough when the program doesn't write on the 
+        // serial output
+        delay(500);
 
         float lux = sample();
         relayState = checkLightCond(lux);
