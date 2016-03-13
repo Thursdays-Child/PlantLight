@@ -22,6 +22,7 @@
 
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
+#include <avr/iotnx5.h>
 
 #include <Arduino.h>
 #include <TinyWireM.h>
