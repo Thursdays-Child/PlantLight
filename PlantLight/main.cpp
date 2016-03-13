@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.81
+ * VERSION 0.9
  */
 
 #include <avr/sleep.h>
@@ -31,8 +31,11 @@
 
 #define RELAY_SW_OUT            4       // Relay out pin
 #define CMD_MAN_IN              1       // Manual light switch
+
 #define WD_TICK_TIME            8       // Watchdog tick time [s] (check WD_MODE or datasheet)
-#define WD_WAIT_TIME            16      // Time [s] to count between two sensor read
+#define WD_WAIT_EN_TIME         24      // Time [s] to count between two sensor read when enabled
+#define WD_WAIT_DIS_TIME        200     // Time [s] to check if the current time enables the system
+
 #define SAMPLE_COUNT            10      // Light sample count (average measurement)
 #define LUX_TH                  10      // Lux threshold
 #define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
@@ -179,11 +182,11 @@ void setTime() {
   time_t newTime;
 
   tme.Year   = 46;
-  tme.Month  = 2;
-  tme.Day    = 20;
-  tme.Hour   = 17;
-  tme.Minute = 9;
-  tme.Second = 45;
+  tme.Month  = 3;
+  tme.Day    = 13;
+  tme.Hour   = 15;
+  tme.Minute = 30;
+  tme.Second = 00;
   newTime = makeTime(tme);
   RTC.set(newTime);                             // Set the RTC
   setTime(newTime);                             // Set the system time
@@ -192,7 +195,10 @@ void setTime() {
   diUpdate.DriftStart = newTime;
   RTC.write_DriftInfo(diUpdate);
 
+#ifdef DEBUG
   SerialDisplayDateTime(newTime);
+  Serial.println();
+#endif
 }
 
 float sample() {
@@ -229,6 +235,7 @@ void cleanLuxArray() {
 }
 
 boolean checkEnable(const time_t &now) {
+//  return (second(now) < 10 || (second(now) >= 20 && second(now) <= 24) || second(now) >= 45);
   return (hour(now) >= 16 && hour(now) <= 22);
 }
 
@@ -270,7 +277,8 @@ void setup() {
 
   // Watchdog interrupt count before reading light value
   // example: wd count * wd interval == 4 * 8 s = 32 s
-  wdMatch = (uint16_t) WD_WAIT_TIME / WD_TICK_TIME;
+  // Start with "enable" time tick and then check the current time
+  wdMatch = (uint16_t) WD_WAIT_EN_TIME / WD_TICK_TIME;
 
   // Setup Pin change interrupt on PCINT1
   GIMSK |= _BV(PCIE);
@@ -289,21 +297,22 @@ void setup() {
   BH1750.powerOn();
   BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
   BH1750.setMtreg(200);                 // Set measurement time register to high value
+  delay(100);
+  BH1750.sleep();                       // Send light sensor to sleep
 
   // Real time clock
   setSyncProvider(timeProvider);        // Pointer to function to get the time from the RTC
-  setSyncInterval(WD_WAIT_TIME);        // Set system time at every sensor read
+  setSyncInterval(WD_WAIT_DIS_TIME);    // Set system time at every sensor read
 
   // Update drift info from RTC
   di = RTC.read_DriftInfo();
   di.DriftDays = 1000;                  // RTC drift in seconds/day. 18 s per day is 18000/1000
-  di.DriftSeconds = 18000;
+  di.DriftSeconds = 0;                  // TODO
   RTC.write_DriftInfo(di);
   setDriftInfo(di);
 }
 
 void loop() {
-  BH1750.sleep();                       // Send light sensor to sleep
   systemSleep();                        // Send the unit to sleep
 
   // Manual command to turn light on
@@ -321,14 +330,30 @@ void loop() {
     // When first == true the first cycle in automatic mode is executed,
     // after manual mode
 
+    time_t timeNow = now();
+    SerialDisplayDateTime(timeNow);
+
+    Serial.print("WD_C = ");
+    Serial.print((uint16_t) wdCount);
+
+    Serial.print(", WD_M = ");
+    Serial.print(wdMatch);
+    Serial.print("  ");
+
     if (wdCount >= wdMatch || first) {
+      Serial.print("wdC >= wdM  ");
       first = false;
       wdCount = 0;
 
       time_t timeNow = now();
 
       if (checkEnable(timeNow)) {
-        BH1750.wakeUp(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
+        Serial.print("checkEn  ");
+        wdMatch = (uint16_t) WD_WAIT_EN_TIME / WD_TICK_TIME;
+
+        // One time mode: the sensor reads and goes into sleep mode autonomously
+        BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
+
         // Wait for the sensor to be fully awake.
         // Less than 500ms is not enough when the program doesn't write on the 
         // serial output
@@ -348,6 +373,15 @@ void loop() {
         else Serial.println("OFF");
 #endif
       } else {
+        // Set longer period to check the current time.
+        // This requires less reads on the RTC when the light management is not
+        // enabled. The accuracy of time when the system is enabled depends on
+        // the watchdog tick (8 s is the longest) and on the wait time.
+        // For this application the accuracy of one second is not needed:
+        // - the "enable" event could be late up to WD_WAIT_DIS_TIME seconds.
+        // - the "disable" event could be late up to WD_WAIT_EN_TIME seconds.
+        wdMatch = (uint16_t) WD_WAIT_DIS_TIME / WD_TICK_TIME;
+
         cleanLuxArray();
         relayState = false;
       }
@@ -358,5 +392,6 @@ void loop() {
         relayStateMem = relayState;
       }
     }
+    Serial.println();
   }
 }
