@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 0.9
+ * VERSION 1.0
  */
 
 #include <avr/sleep.h>
@@ -268,7 +268,9 @@ boolean checkLightCond(float lux) {
 }
 
 void setup() {
+#ifdef DEBUG
   Serial.begin(9600);
+#endif
 
   pinMode(RELAY_SW_OUT, OUTPUT);
   pinMode(CMD_MAN_IN, INPUT_PULLUP);
@@ -308,7 +310,7 @@ void setup() {
   // Update drift info from RTC
   di = RTC.read_DriftInfo();
   di.DriftDays = 1000;                  // RTC drift in seconds/day. 18 s per day is 18000/1000
-  di.DriftSeconds = 0;                  // TODO
+  di.DriftSeconds = 27857;
   RTC.write_DriftInfo(di);
   setDriftInfo(di);
 }
@@ -331,25 +333,13 @@ void loop() {
     // When first == true the first cycle in automatic mode is executed,
     // after manual mode
 
-    time_t timeNow = now();
-    SerialDisplayDateTime(timeNow);
-
-    Serial.print("WD_C = ");
-    Serial.print((uint16_t) wdCount);
-
-    Serial.print(", WD_M = ");
-    Serial.print(wdMatch);
-    Serial.print("  ");
-
     if (wdCount >= wdMatch || first) {
-      Serial.print("wdC >= wdM  ");
       first = false;
       wdCount = 0;
 
       time_t timeNow = now();
 
       if (checkEnable(timeNow)) {
-        Serial.print("checkEn  ");
         wdMatch = (uint16_t) WD_WAIT_EN_TIME / WD_TICK_TIME;
 
         // One time mode: the sensor reads and goes into sleep mode autonomously
@@ -393,6 +383,5 @@ void loop() {
         relayStateMem = relayState;
       }
     }
-    Serial.println();
   }
 }
