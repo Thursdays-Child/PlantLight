@@ -62,7 +62,7 @@ $(TARGET).elf: $(OBJ).o
 	
 upload:
 	@echo 'Invoking: AVRDude'
-	$(AVRDUDE) -p$(MCU) -cusbasp -Uflash:w:$(TARGET).hex:a
+	$(AVRDUDE) -p$(MCU) -cusbasp -Uflash:w:$(TARGET).hex:a -Ueeprom:w:../eeprom_CET_CEST_rules.hex:a
 	@echo 'Finished building: $@'
 	@echo ' '
 	

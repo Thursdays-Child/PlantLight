@@ -17,16 +17,17 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 1.0
+ * VERSION 1.1
  */
 
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 #include <avr/iotnx5.h>
+#include <avr/pgmspace.h>
 
 #include <Arduino.h>
 #include <TinyWireM.h>
-#include <Time.h>
+#include <Timezone.h>                   //https://github.com/JChristensen/Timezone
 #include <BH1750FVI.h>
 #include <DS1307RTC.h>
 
@@ -55,12 +56,6 @@ void systemSleep();
 // to RTC.get(), which is not a static function (class member)
 time_t timeProvider();
 
-// Display a date in readable format on the serial interface
-void printDigits(int digits);
-void SerialDisplayDateTime(const time_t &timeToDisplay);
-
-// Sets the RTC to the new time
-void setTime();
 
 // Checks the current time of day and month of the year.
 // Returns true if the light is now enabled.
@@ -73,8 +68,24 @@ boolean checkLightCond(float lux);
 // Sample some lux value and calculate the running average over time
 float sample();
 
-void printLuxArray();
+// Cleans the array of sensor measurement
 void cleanLuxArray();
+
+#ifdef DEBUG
+// Prints the array of sensor measurement - DEBUG only
+void printLuxArray();
+
+// Print an integer in "00" format (with leading zero).
+// Input value assumed to be between 0 and 99.
+void sPrintI00(int val);
+
+// Print an integer in ":00" format (with leading zero).
+// Input value assumed to be between 0 and 99.
+void sPrintDigits(int val);
+
+// Function to print time with time zone
+void printTime(time_t t, char *tz);
+#endif
 
 
 // ####################### Constants ########################
@@ -101,6 +112,14 @@ boolean first = false;
 static float luxSamples[SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
 static boolean relayState = false, relayStateMem = false;
+
+
+//CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
+//const TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     // Central European Summer Time
+//const TimeChangeRule CET  = {"CET ", Last, Sun, Oct, 3, 60};      // Central European Standard Time
+Timezone myTZ(0);           // Rules stored at EEPROM address 0
+TimeChangeRule *tcr;        // Pointer to the time change rule, use to get TZ abbreviations
+
 
 // ####################### Functions ########################
 
@@ -156,52 +175,6 @@ time_t timeProvider() {
   return RTC.get();
 }
 
-void printDigits(int digits) {
-  // Utility function for digital clock display: prints preceding colon and leading 0
-  if (digits < 10)
-    Serial.print('0');
-  Serial.print(digits);
-}
-
-void SerialDisplayDateTime(const time_t &timeToDisplay) {
-  printDigits(day(timeToDisplay));
-  Serial.print("/");
-  printDigits(month(timeToDisplay));
-  Serial.print("/");
-  Serial.print(year(timeToDisplay));
-  Serial.print(" ");
-  printDigits(hour(timeToDisplay));
-  Serial.print(":");
-  printDigits(minute(timeToDisplay));
-  Serial.print(":");
-  printDigits(second(timeToDisplay));
-  Serial.print(" ");
-}
-
-void setTime() {
-  tmElements_t tme;
-  time_t newTime;
-
-  tme.Year   = 46;
-  tme.Month  = 3;
-  tme.Day    = 13;
-  tme.Hour   = 15;
-  tme.Minute = 30;
-  tme.Second = 00;
-  newTime = makeTime(tme);
-  RTC.set(newTime);                             // Set the RTC
-  setTime(newTime);                             // Set the system time
-
-  tmDriftInfo diUpdate = RTC.read_DriftInfo();  // Update DriftInfo in RTC
-  diUpdate.DriftStart = newTime;
-  RTC.write_DriftInfo(diUpdate);
-
-#ifdef DEBUG
-  SerialDisplayDateTime(newTime);
-  Serial.println();
-#endif
-}
-
 float sample() {
   float tmpLux = 0.0;
   // Shift left values in sample array
@@ -221,12 +194,14 @@ float sample() {
   return tmpLux / readCounter;
 }
 
+#ifdef DEBUG
 void printLuxArray() {
   for (int i = 0; i < SAMPLE_COUNT; ++i) {
     Serial.print(luxSamples[i]);
     Serial.print(" ");
   }
 }
+#endif
 
 void cleanLuxArray() {
   readCounter = 0;
@@ -236,7 +211,6 @@ void cleanLuxArray() {
 }
 
 boolean checkEnable(const time_t &now) {
-//  return (second(now) < 10 || (second(now) >= 20 && second(now) <= 24) || second(now) >= 45);
   return (hour(now) >= 16 && hour(now) <= 22);
 }
 
@@ -266,6 +240,43 @@ boolean checkLightCond(float lux) {
   }
   return false;
 }
+
+#ifdef DEBUG
+//Print an integer in "00" format (with leading zero).
+//Input value assumed to be between 0 and 99.
+void sPrintI00(int val) {
+    if (val < 10) Serial.print('0');
+    Serial.print(val, DEC);
+    return;
+}
+
+//Print an integer in ":00" format (with leading zero).
+//Input value assumed to be between 0 and 99.
+void sPrintDigits(int val) {
+    Serial.print(':');
+    if(val < 10) Serial.print('0');
+    Serial.print(val, DEC);
+}
+
+//Function to print time with time zone
+void printTime(time_t t, char *tz) {
+    sPrintI00(hour(t));
+    sPrintDigits(minute(t));
+    sPrintDigits(second(t));
+    Serial.print(' ');
+    Serial.print(weekday(t));
+    Serial.print(' ');
+    sPrintI00(day(t));
+    Serial.print(' ');
+    Serial.print(month(t));
+    Serial.print(' ');
+    Serial.print(year(t));
+    Serial.print(' ');
+    Serial.print(tz);
+    Serial.println();
+}
+#endif
+
 
 void setup() {
 #ifdef DEBUG
@@ -313,22 +324,47 @@ void setup() {
   di.DriftSeconds = 27857;
   RTC.write_DriftInfo(di);
   setDriftInfo(di);
+
+#ifdef DEBUG
+  printTime(now(), "UTC S2");
+#endif
 }
 
 void loop() {
-  systemSleep();                        // Send the unit to sleep
+
+#ifdef DEBUG
+  Serial.println();
+  time_t utc = now();
+  printTime(utc, "UTC");
+  time_t local = myTZ.toLocal(utc, &tcr);
+  printTime(local, tcr->abbrev);
+#endif
+
+  systemSleep();                                    // Send the unit to sleep
 
   // Manual command to turn light on
   if (!digitalRead(CMD_MAN_IN)) {
     if (!first) {
       // Used only once to set the time with external input
-      // setTime();
+      setTime(20, 25, 00, 30, 10, 2016);            // TODO comment Set system clock in UTC!!
+
+#ifdef DEBUG
+      Serial.println(getSystemTime());
+#endif
+
+      time_t systemTime = getSystemTime();
+      RTC.set(systemTime);
+
+      tmDriftInfo diUpdate = RTC.read_DriftInfo();  // Update DriftInfo in RTC
+      diUpdate.DriftStart = systemTime;
+      RTC.write_DriftInfo(diUpdate);
+      setDriftInfo(diUpdate);
+
       first = true;
       cleanLuxArray();
       relayState = relayStateMem = true;
       digitalWrite(RELAY_SW_OUT, relayState);
     }
-
   } else  {
     // When first == true the first cycle in automatic mode is executed,
     // after manual mode
@@ -337,9 +373,11 @@ void loop() {
       first = false;
       wdCount = 0;
 
-      time_t timeNow = now();
+      // Conversion from UTC (system clock) to local time
+      time_t utc = now();
+      time_t local = myTZ.toLocal(utc, &tcr);
 
-      if (checkEnable(timeNow)) {
+      if (checkEnable(local)) {
         wdMatch = (uint16_t) WD_WAIT_EN_TIME / WD_TICK_TIME;
 
         // One time mode: the sensor reads and goes into sleep mode autonomously
@@ -354,7 +392,7 @@ void loop() {
         relayState = checkLightCond(lux);
 
 #ifdef DEBUG
-        SerialDisplayDateTime(timeNow);
+        printTime(local, tcr->abbrev);
         printLuxArray();
         Serial.print("= ");
         Serial.print(lux);
