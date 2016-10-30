@@ -259,7 +259,7 @@ time_t now(){
   // due to conversion of driftCorrection to long, accuracy of time returned is +/- 0.5sec
   time_t curTime = rtcTime - long(driftCorrection);
 
-  if(nextSyncTime <= curTime){
+  if (nextSyncTime <= curTime) {
     if (curTime != 0)
       setTime(curTime);
     else
@@ -269,13 +269,17 @@ time_t now(){
   return curTime;
 }
 
+time_t getSystemTime() {
+  return sysTime;
+}
+
 void setTime(time_t t){ 
   sysTime = t;  
   nextSyncTime = t + syncInterval;
   Status = timeSet; 
 } 
 
-void  setTime(int hr,int min,int sec,int dy, int mnth, int yr){
+void setTime(int hr,int min,int sec,int dy, int mnth, int yr){
  // year can be given as full four digit year or two digits (2010 or 10 for 2010);
  // it is converted to years since 1970
   if( yr > 99)
@@ -299,7 +303,7 @@ timeStatus_t timeStatus(){ // indicates if time has been set and recently synchr
   return Status;
 }
 
-void setSyncProvider( getExternalTime getTimeFunction){
+void setSyncProvider(getExternalTime getTimeFunction){
   getTimePtr = getTimeFunction;  
   nextSyncTime = sysTime;
   now(); // this will sync the clock

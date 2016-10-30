@@ -11,7 +11,6 @@
 /*
  * Gionata Boccalini - 30/10/2016
  *  - Removed ARDUINO #if since it's not used in my development environment (ATTiny)
- *
  */
 
 #ifndef Timezone_h

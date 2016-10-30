@@ -110,7 +110,8 @@ int     month(time_t t);   // the month for the given time
 int     year();            // the full four digit year: (2009, 2010 etc) 
 int     year(time_t t);    // the year for the given time
 
-time_t  now();	           // return drift corrected RTC time and set as system time
+time_t  now();  	       // return drift corrected RTC time and set as system time after sync interval
+time_t  getSystemTime();   // return current system time
 void    setTime(time_t t);
 void    setTime(int hr,int min,int sec,int day, int month, int yr);
 void    adjustTime(long adjustment);
