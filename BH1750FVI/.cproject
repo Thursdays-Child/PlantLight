@@ -146,9 +146,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TinyWireM}&quot;"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.otherflags.1813335720" name="Other flags" superClass="de.innot.avreclipse.cppcompiler.option.otherflags" value="" valueType="string"/>
-								<option id="de.innot.avreclipse.cppcompiler.option.def.1138261505" superClass="de.innot.avreclipse.cppcompiler.option.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="BH1750_DEBUG=1"/>
-								</option>
+								<option id="de.innot.avreclipse.cppcompiler.option.def.1138261505" name="Define Syms (-D)" superClass="de.innot.avreclipse.cppcompiler.option.def" valueType="definedSymbols"/>
 								<inputType id="de.innot.avreclipse.cppcompiler.input.899353248" superClass="de.innot.avreclipse.cppcompiler.input"/>
 							</tool>
 							<tool id="de.innot.avreclipse.tool.linker.winavr.base.308459784" name="AVR C Linker" superClass="de.innot.avreclipse.tool.linker.winavr.base"/>

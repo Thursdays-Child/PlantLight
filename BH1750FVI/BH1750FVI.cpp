@@ -60,7 +60,7 @@ uint8_t BH1750FVI::getMtreg() {
 
 void BH1750FVI::setMtreg(uint8_t mtreg) {
   if (mtreg < 31 || mtreg > 254) {
-#if BH1750_DEBUG == 1
+#if BH1750_DEBUG
       Serial.print("Invalid measurement time reg value: ");
       Serial.println(mtreg, DEC);
 #endif
@@ -121,7 +121,7 @@ void BH1750FVI::setMode(uint8_t mode) {
       break;
     default:
       // Invalid measurement mode
-#if BH1750_DEBUG == 1
+#if BH1750_DEBUG
       Serial.print("Invalid measurement mode: 0x");
       Serial.println(mode, HEX);
 #endif
