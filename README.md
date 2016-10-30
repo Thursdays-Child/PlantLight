@@ -1,5 +1,14 @@
 # PLANT LIGHT 
 ### Automatic light switch based on light sensor and date/time
+**version 1.1**
+
+Added TimeZone library to account for DST (summer time). The TimeZone has been added to the DS1307RTC library,
+and slightly modified to remove ARDUINO define, not present in my development environment. 
+The timezone rules are saved into an EEPROM image (to save program memory on the small ATTiny85): the image is in 
+Intel HEX format.
+
+Library reference at https://github.com/JChristensen/Timezone
+
 **version 1.0**
 
 The project is an automatic switch for 2 LED lamps used to illuminate 
