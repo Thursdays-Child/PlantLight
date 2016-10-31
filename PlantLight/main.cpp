@@ -27,7 +27,7 @@
 
 #include <Arduino.h>
 #include <TinyWireM.h>
-#include <Timezone.h>                   //https://github.com/JChristensen/Timezone
+#include <Timezone.h>                   // https://github.com/JChristensen/Timezone
 #include <BH1750FVI.h>
 #include <DS1307RTC.h>
 
@@ -42,6 +42,8 @@
 #define LUX_TH                  10      // Lux threshold
 #define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
 
+#define RULES_TZ_ADD            0       // Timezone rules EEPROM start address
+
 // ####################### Prototypes #######################
 
 // Setup watchdog wakeup interrupt
@@ -55,7 +57,6 @@ void systemSleep();
 // Provides a time_t to Time library, wrapper for call
 // to RTC.get(), which is not a static function (class member)
 time_t timeProvider();
-
 
 // Checks the current time of day and month of the year.
 // Returns true if the light is now enabled.
@@ -117,8 +118,8 @@ static boolean relayState = false, relayStateMem = false;
 //CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
 //const TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     // Central European Summer Time
 //const TimeChangeRule CET  = {"CET ", Last, Sun, Oct, 3, 60};      // Central European Standard Time
-Timezone myTZ(0);           // Rules stored at EEPROM address 0
-TimeChangeRule *tcr;        // Pointer to the time change rule, use to get TZ abbreviations
+Timezone myTZ(RULES_TZ_ADD);            // Rules stored at EEPROM address RULES_TZ_ADD
+TimeChangeRule *tcr;                    // Pointer to the time change rule, use to get TZ abbreviations
 
 
 // ####################### Functions ########################
@@ -242,23 +243,18 @@ boolean checkLightCond(float lux) {
 }
 
 #ifdef DEBUG
-//Print an integer in "00" format (with leading zero).
-//Input value assumed to be between 0 and 99.
 void sPrintI00(int val) {
     if (val < 10) Serial.print('0');
     Serial.print(val, DEC);
     return;
 }
 
-//Print an integer in ":00" format (with leading zero).
-//Input value assumed to be between 0 and 99.
 void sPrintDigits(int val) {
     Serial.print(':');
     if(val < 10) Serial.print('0');
     Serial.print(val, DEC);
 }
 
-//Function to print time with time zone
 void printTime(time_t t, char *tz) {
     sPrintI00(hour(t));
     sPrintDigits(minute(t));
@@ -324,10 +320,6 @@ void setup() {
   di.DriftSeconds = 27857;
   RTC.write_DriftInfo(di);
   setDriftInfo(di);
-
-#ifdef DEBUG
-  printTime(now(), "UTC S2");
-#endif
 }
 
 void loop() {
@@ -346,7 +338,7 @@ void loop() {
   if (!digitalRead(CMD_MAN_IN)) {
     if (!first) {
       // Used only once to set the time with external input
-      setTime(20, 25, 00, 30, 10, 2016);            // TODO comment Set system clock in UTC!!
+      // setTime(20, 25, 00, 30, 10, 2016);         // Set system clock in UTC!!
 
 #ifdef DEBUG
       Serial.println(getSystemTime());
