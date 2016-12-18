@@ -3,6 +3,7 @@
 	<name>LightLogger</name>
 	<comment></comment>
 	<projects>
+		<project>ArduinoCore</project>
 		<project>SD</project>
 		<project>SoftwareSerial</project>
 	</projects>
