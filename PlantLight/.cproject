@@ -47,7 +47,7 @@
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.otherflags.1801394871" name="Other flags" superClass="de.innot.avreclipse.cppcompiler.option.otherflags" value="-ffunction-sections -fdata-sections -fno-use-cxa-atexit -Wno-unused-local-typedefs" valueType="string"/>
 								<option id="de.innot.avreclipse.cppcompiler.option.def.165428221" name="Define Syms (-D)" superClass="de.innot.avreclipse.cppcompiler.option.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="DEBUG=1"/>
+									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.optimize.packstruct.1630771459" name="Pack structs (-fpack-struct)" superClass="de.innot.avreclipse.cppcompiler.option.optimize.packstruct" value="true" valueType="boolean"/>
 								<inputType id="de.innot.avreclipse.cppcompiler.input.876646708" superClass="de.innot.avreclipse.cppcompiler.input"/>
