@@ -3,10 +3,11 @@
 	<name>PlantLight</name>
 	<comment></comment>
 	<projects>
-		<project>AttinyCore</project>
+		<project>ATTinyCore</project>
 		<project>BH1750FVI</project>
 		<project>DS1307RTC</project>
 		<project>TinyWireM</project>
+		<project>AttinyCore</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
