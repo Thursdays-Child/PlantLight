@@ -1,10 +1,10 @@
 CXX=avr-g++
 
-CORE_DIR=../../../Core/AttinyCore/
+CORE_DIR=../../../../Core/ATTinyCore/
 PROJECT_DIR=..
-TINYWIRE_DIR=../../../Utility/TinyWireM/
-DS1307RTC_DIR=../../BH1750FVI/
-BH1750FVI_DIR=../../DS1307RTC/
+TINYWIRE_DIR=../../../../Libraries/I2C/TinyWireM/
+DS1307RTC_DIR=../../../../Libraries/Sensors/BH1750FVI/
+BH1750FVI_DIR=../../../../Libraries/Time/DS1307RTC/
 LIB_DIR=Attiny85
 
 # avr tools path
@@ -24,7 +24,7 @@ CPU_SPEED=1000000UL
 INCLUDE=-I$(CORE_DIR) -I$(DS1307RTC_DIR) -I$(TINYWIRE_DIR) -I$(BH1750FVI_DIR)
 
 # Libraries (dependencies: Attiny core, DS1307 RTC clock , BH1750FVI light sensor, TINYWIRE I2C bus)
-LIBS=-L$(CORE_DIR)/$(LIB_DIR) -L$(TINYWIRE_DIR)/$(LIB_DIR)\
+LIBS=-L$(CORE_DIR)/ATTiny85 -L$(TINYWIRE_DIR)/$(LIB_DIR)\
 -L$(DS1307RTC_DIR)/$(LIB_DIR) -L$(BH1750FVI_DIR)/$(LIB_DIR)\
 -lbh1750fvi -lds1307rtc -ltinywirem -lattinycore
 
