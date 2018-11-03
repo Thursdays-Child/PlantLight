@@ -17,7 +17,7 @@
 
 /*
  * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 1.1
+ * VERSION 1.2
  */
 
 #include <avr/sleep.h>
@@ -33,6 +33,9 @@
 
 #define RELAY_SW_OUT            4       // Relay out pin
 #define CMD_MAN_IN              1       // Manual light switch
+
+#define SER_RX                  0       // Pin PB0
+#define SER_TX                  1       // Pin PB1 - tiny serial debug pin
 
 #define WD_TICK_TIME            8       // Watchdog tick time [s] (check WD_MODE or datasheet)
 #define WD_WAIT_EN_TIME         24      // Time [s] to count between two sensor read when enabled
@@ -71,6 +74,9 @@ float sample();
 
 // Cleans the array of sensor measurement
 void cleanLuxArray();
+
+// Set system clock in UTC format.
+void setTimeOnInput(int hr, int min, int sec, int dy, int mnth, int yr);
 
 #ifdef DEBUG
 // Prints the array of sensor measurement - DEBUG only
@@ -114,13 +120,11 @@ static float luxSamples[SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
 static boolean relayState = false, relayStateMem = false;
 
-
 //CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
 //const TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     // Central European Summer Time
 //const TimeChangeRule CET  = {"CET ", Last, Sun, Oct, 3, 60};      // Central European Standard Time
 Timezone myTZ(RULES_TZ_ADD);            // Rules stored at EEPROM address RULES_TZ_ADD
 TimeChangeRule *tcr;                    // Pointer to the time change rule, use to get TZ abbreviations
-
 
 // ####################### Functions ########################
 
@@ -242,6 +246,26 @@ boolean checkLightCond(float lux) {
   return false;
 }
 
+/**
+ * Set the system clock in UTC format.
+ * Used only once to set the time with the edge of an external input pin.
+ */
+void setTimeOnInput(int hr, int min, int sec, int dy, int mnth, int yr) {
+  setTime(hr, min, sec, dy, mnth, yr);
+
+#ifdef DEBUG
+  Serial.println(getSystemTime());
+#endif
+
+  time_t systemTime = getSystemTime();
+  RTC.set(systemTime);
+  tmDriftInfo diUpdate = RTC.read_DriftInfo(); // Update DriftInfo in RTC
+  diUpdate.DriftStart = systemTime;
+
+  RTC.write_DriftInfo(diUpdate);
+  setDriftInfo(diUpdate);
+}
+
 #ifdef DEBUG
 void sPrintI00(int val) {
     if (val < 10) Serial.print('0');
@@ -272,7 +296,6 @@ void printTime(time_t t, char *tz) {
     Serial.println();
 }
 #endif
-
 
 void setup() {
 #ifdef DEBUG
@@ -330,6 +353,7 @@ void loop() {
   printTime(utc, "UTC");
   time_t local = myTZ.toLocal(utc, &tcr);
   printTime(local, tcr->abbrev);
+  delay(1000);
 #endif
 
   systemSleep();                                    // Send the unit to sleep
@@ -338,19 +362,7 @@ void loop() {
   if (!digitalRead(CMD_MAN_IN)) {
     if (!first) {
       // Used only once to set the time with external input
-      // setTime(20, 25, 00, 30, 10, 2016);         // Set system clock in UTC!!
-
-#ifdef DEBUG
-      Serial.println(getSystemTime());
-#endif
-
-      time_t systemTime = getSystemTime();
-      RTC.set(systemTime);
-
-      tmDriftInfo diUpdate = RTC.read_DriftInfo();  // Update DriftInfo in RTC
-      diUpdate.DriftStart = systemTime;
-      RTC.write_DriftInfo(diUpdate);
-      setDriftInfo(diUpdate);
+      setTimeOnInput(17, 46, 00, 3, 11, 2018);
 
       first = true;
       cleanLuxArray();
@@ -360,7 +372,7 @@ void loop() {
   } else  {
     // When first == true the first cycle in automatic mode is executed,
     // after manual mode
-
+    
     if (wdCount >= wdMatch || first) {
       first = false;
       wdCount = 0;

@@ -1,5 +1,9 @@
 # PLANT LIGHT 
 ### Automatic light switch based on light sensor and date/time
+**version 1.2**
+Added function to set time from an external input, with all the istructions needed: set draft info on RTC clock.
+Linked against new ATTiny CORE library, that has changed the RX and TX pin for serial debug.
+
 **version 1.1**
 
 Added TimeZone library to account for DST (summer time). The TimeZone has been added to the DS1307RTC library,
