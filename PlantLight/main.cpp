@@ -305,7 +305,7 @@ void setup() {
   pinMode(RELAY_SW_OUT, OUTPUT);
   pinMode(CMD_MAN_IN, INPUT_PULLUP);
 
-  // Setup watchdog timeout to 8 s (mode 9)
+  // Setup watchdog timeout to 4 s (mode 8)
   setupWatchdog(WD_TICK_TIME);
 
   // Watchdog interrupt count before reading light value
@@ -362,7 +362,7 @@ void loop() {
   if (!digitalRead(CMD_MAN_IN)) {
     if (!first) {
       // Used only once to set the time with external input
-      setTimeOnInput(17, 46, 00, 3, 11, 2018);
+      setTimeOnInput(16, 21, 00, 4, 11, 2018);
 
       first = true;
       cleanLuxArray();
