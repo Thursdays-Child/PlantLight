@@ -4,13 +4,12 @@
 	<comment></comment>
 	<projects>
 		<project>ATMegaCore</project>
-		<project>BH1750FVI</project>
-		<project>DS3232RTC</project>
-		<project>Wire</project>
-		<project>AttinyCore</project>
-		<project>TinyWireM</project>
 		<project>ATTinyCore</project>
+		<project>BH1750FVI</project>
 		<project>DS1307RTC</project>
+		<project>DS3232RTC</project>
+		<project>TinyWireM</project>
+		<project>Wire</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
