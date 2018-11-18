@@ -3,11 +3,14 @@
 	<name>PlantLight</name>
 	<comment></comment>
 	<projects>
-		<project>ATTinyCore</project>
+		<project>ATMegaCore</project>
 		<project>BH1750FVI</project>
-		<project>DS1307RTC</project>
-		<project>TinyWireM</project>
+		<project>DS3232RTC</project>
+		<project>Wire</project>
 		<project>AttinyCore</project>
+		<project>TinyWireM</project>
+		<project>ATTinyCore</project>
+		<project>DS1307RTC</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

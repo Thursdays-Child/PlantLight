@@ -16,20 +16,19 @@
  */
 
 /*
- * Built for Attiny85 1Mhz, using AVR USBasp programmer.
- * VERSION 1.2
+ * Built for ATMega 1Mhz, using AVR Pololu programmer.
+ * VERSION 2.0b001
  */
 
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
-#include <avr/iotnx5.h>
 #include <avr/pgmspace.h>
 
 #include <Arduino.h>
-#include <TinyWireM.h>
 #include <Timezone.h>                   // https://github.com/JChristensen/Timezone
 #include <BH1750FVI.h>
-#include <DS1307RTC.h>
+#include <DS3232RTC.h>
+#include <TwoWire.h>
 
 #define RELAY_SW_OUT            4       // Relay out pin
 #define CMD_MAN_IN              1       // Manual light switch
@@ -39,7 +38,6 @@
 
 #define WD_TICK_TIME            8       // Watchdog tick time [s] (check WD_MODE or datasheet)
 #define WD_WAIT_EN_TIME         24      // Time [s] to count between two sensor read when enabled
-#define WD_WAIT_DIS_TIME        200     // Time [s] to check if the current time enables the system
 
 #define SAMPLE_COUNT            10      // Light sample count (average measurement)
 #define LUX_TH                  10      // Lux threshold
@@ -63,7 +61,7 @@ time_t timeProvider();
 
 // Checks the current time of day and month of the year.
 // Returns true if the light is now enabled.
-boolean checkEnable(const time_t &now);
+boolean checkEnable(const struct tm &now);
 
 // Checks actual lux value. Returns true if the conditions
 // to turn lights on are met.
@@ -91,31 +89,26 @@ void sPrintI00(int val);
 void sPrintDigits(int val);
 
 // Function to print time with time zone
-void printTime(time_t t, char *tz);
+void printTime(struct tm *tm, char *tz);
 #endif
-
 
 // ####################### Constants ########################
 
 // Watchdog interrupt sleep time
-// 0=16ms, 1=32ms, 2=64ms, 3=128ms, 4=250ms, 5=500ms, 6=1 sec, 7=2 sec, 8=4 sec, 9=8sec
-const float WD_MODE[10] = {0.016, 0.032, 0.064, 0.128, 0.25, 0.5, 1, 2, 4, 8};
-
+// 0=16ms, 1=32ms, 2=64ms, 3=125ms, 4=250ms, 5=500ms, 6=1 sec, 7=2 sec, 8=4 sec, 9=8sec
+const float WD_MODE[10] = {0.016, 0.032, 0.064, 0.125, 0.25, 0.5, 1, 2, 4, 8};
 
 // ####################### Variables ########################
 
-USI_TWI bus;                            // TinyWireM instance (I2C bus)
+TwoWire bus;                            // TinyWireM instance (I2C bus)
 BH1750FVI BH1750(bus);                  // Light sensor instance
-RTC_DS1307 RTC(bus);                    // RTC clock instance
-
-tmDriftInfo di;
+DS3232RTC RTC(bus);                    // RTC clock instance
 
 volatile uint8_t wdCount = 0;
 
 // Watchdog interrupt count before reading light value
 // wd count * wd interval == 4 * 8 s = 32 s
 uint16_t wdMatch = 0;
-boolean first = false;
 static float luxSamples[SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
 static boolean relayState = false, relayStateMem = false;
@@ -147,14 +140,18 @@ void setupWatchdog(float tick) {
     wdreg |= (1 << 5);
   wdreg |= (1 << WDCE);
 
+  // Clear the reset flag.
   MCUSR &= ~(1 << WDRF);
 
-  // Start timed sequence
-  WDTCR |= (1 << WDCE) | (1 << WDE);
+  // Start timed sequence: in order to change WDE or the prescaler, we need to
+  // set WDCE (This will allow updates for 4 clock cycles).
+  WDTCSR |= (1 << WDCE) | (1 << WDE);
 
-  // Set new watchdog timeout value
-  WDTCR = wdreg;
-  WDTCR |= _BV(WDIE);
+  // Set new watchdog timeout prescaler value.
+  WDTCSR = wdreg;
+
+  // Enable the WD interrupt (note no reset).
+  WDTCSR |= _BV(WDIE);
 }
 
 void systemSleep() {
@@ -215,8 +212,8 @@ void cleanLuxArray() {
   }
 }
 
-boolean checkEnable(const time_t &now) {
-  return (hour(now) >= 16 && hour(now) <= 22);
+boolean checkEnable(const struct tm &now) {
+  return (now.tm_hour >= 16 && now.tm_hour <= 22);
 }
 
 boolean checkLightCond(float lux) {
@@ -246,26 +243,6 @@ boolean checkLightCond(float lux) {
   return false;
 }
 
-/**
- * Set the system clock in UTC format.
- * Used only once to set the time with the edge of an external input pin.
- */
-void setTimeOnInput(int hr, int min, int sec, int dy, int mnth, int yr) {
-  setTime(hr, min, sec, dy, mnth, yr);
-
-#ifdef DEBUG
-  Serial.println(getSystemTime());
-#endif
-
-  time_t systemTime = getSystemTime();
-  RTC.set(systemTime);
-  tmDriftInfo diUpdate = RTC.read_DriftInfo(); // Update DriftInfo in RTC
-  diUpdate.DriftStart = systemTime;
-
-  RTC.write_DriftInfo(diUpdate);
-  setDriftInfo(diUpdate);
-}
-
 #ifdef DEBUG
 void sPrintI00(int val) {
     if (val < 10) Serial.print('0');
@@ -279,23 +256,44 @@ void sPrintDigits(int val) {
     Serial.print(val, DEC);
 }
 
-void printTime(time_t t, char *tz) {
-    sPrintI00(hour(t));
-    sPrintDigits(minute(t));
-    sPrintDigits(second(t));
+void printTime(struct tm *tm, char *tz) {
+    sPrintI00(tm->tm_hour);
+    sPrintDigits(tm->tm_min);
+    sPrintDigits(tm->tm_sec);
     Serial.print(' ');
-    Serial.print(weekday(t));
+    Serial.print(tm->tm_wday);
     Serial.print(' ');
-    sPrintI00(day(t));
+    sPrintI00(tm->tm_mday);
     Serial.print(' ');
-    Serial.print(month(t));
+    Serial.print(tm->tm_mon);
     Serial.print(' ');
-    Serial.print(year(t));
+    Serial.print(tm->tm_year);
     Serial.print(' ');
     Serial.print(tz);
     Serial.println();
 }
 #endif
+
+/**
+ * Set the system clock in UTC format.
+ * Used only once to set the time with the edge of an external input pin.
+ */
+void setTimeOnInput(int hr, int min, int sec, int mday, int mon, int year) {
+  struct tm tm;
+  tm.tm_hour = hr;
+  tm.tm_min  = min;
+  tm.tm_sec  = sec;
+  // TODO wday
+  tm.tm_mday = mday;
+  tm.tm_mon  = mon;
+  tm.tm_year = year;
+
+  RTC.write(&tm);
+
+#ifdef DEBUG
+  printTime(&tm, "UTC");
+#endif
+}
 
 void setup() {
 #ifdef DEBUG
@@ -305,7 +303,7 @@ void setup() {
   pinMode(RELAY_SW_OUT, OUTPUT);
   pinMode(CMD_MAN_IN, INPUT_PULLUP);
 
-  // Setup watchdog timeout to 4 s (mode 8)
+  // Setup watchdog timeout to 8 s (mode 9)
   setupWatchdog(WD_TICK_TIME);
 
   // Watchdog interrupt count before reading light value
@@ -313,9 +311,9 @@ void setup() {
   // Start with "enable" time tick and then check the current time
   wdMatch = (uint16_t) WD_WAIT_EN_TIME / WD_TICK_TIME;
 
-  // Setup Pin change interrupt on PCINT1
-  GIMSK |= _BV(PCIE);
-  PCMSK |= _BV(PCINT1);
+  // TODO Setup Pin change interrupt on PCINT1
+  //GIMSK |= _BV(PCIE);
+  //PCMSK |= _BV(PCINT1);
 
   // Set the internal registers to reduce power consumes
   ACSR   = (1 << ACD);                  // Shut down the analog comparator
@@ -333,97 +331,63 @@ void setup() {
   delay(100);
   BH1750.sleep();                       // Send light sensor to sleep
 
-  // Real time clock
-  setSyncProvider(timeProvider);        // Pointer to function to get the time from the RTC
-  setSyncInterval(WD_WAIT_DIS_TIME);    // Set system time at every sensor read
-
-  // Update drift info from RTC
-  di = RTC.read_DriftInfo();
-  di.DriftDays = 1000;                  // RTC drift in seconds/day. 18 s per day is 18000/1000
-  di.DriftSeconds = 27857;
-  RTC.write_DriftInfo(di);
-  setDriftInfo(di);
+  // Real time clock TODO
+  // TODO set new alarm
 }
 
 void loop() {
+  systemSleep();                                    // Send the unit to sleep
+
+  time_t utc = RTC.get();
+  time_t local = myTZ.toLocal(utc, &tcr);
+
+  struct tm tm_local;
+  gmtime_r(&local, &tm_local);
 
 #ifdef DEBUG
+  struct tm tm_utc;
+  gmtime_r(&utc, &tm_utc);
   Serial.println();
-  time_t utc = now();
-  printTime(utc, "UTC");
-  time_t local = myTZ.toLocal(utc, &tcr);
-  printTime(local, tcr->abbrev);
+  printTime(&tm_utc, "UTC");
+  printTime(&tm_local, tcr->abbrev);
+
   delay(1000);
 #endif
 
-  systemSleep();                                    // Send the unit to sleep
+  if (checkEnable(tm_local)) {
+    // TODO enable watchdog
 
-  // Manual command to turn light on
-  if (!digitalRead(CMD_MAN_IN)) {
-    if (!first) {
-      // Used only once to set the time with external input
-      setTimeOnInput(16, 21, 00, 4, 11, 2018);
+    // One time mode: the sensor reads and goes into sleep mode autonomously
+    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
 
-      first = true;
-      cleanLuxArray();
-      relayState = relayStateMem = true;
-      digitalWrite(RELAY_SW_OUT, relayState);
-    }
-  } else  {
-    // When first == true the first cycle in automatic mode is executed,
-    // after manual mode
-    
-    if (wdCount >= wdMatch || first) {
-      first = false;
-      wdCount = 0;
+    // Wait for the sensor to be fully awake.
+    // Less than 500ms is not enough when the program doesn't write on the
+    // serial output
+    delay(500);
 
-      // Conversion from UTC (system clock) to local time
-      time_t utc = now();
-      time_t local = myTZ.toLocal(utc, &tcr);
-
-      if (checkEnable(local)) {
-        wdMatch = (uint16_t) WD_WAIT_EN_TIME / WD_TICK_TIME;
-
-        // One time mode: the sensor reads and goes into sleep mode autonomously
-        BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
-
-        // Wait for the sensor to be fully awake.
-        // Less than 500ms is not enough when the program doesn't write on the 
-        // serial output
-        delay(500);
-
-        float lux = sample();
-        relayState = checkLightCond(lux);
+    float lux = sample();
+    relayState = checkLightCond(lux);
 
 #ifdef DEBUG
-        printTime(local, tcr->abbrev);
-        printLuxArray();
-        Serial.print("= ");
-        Serial.print(lux);
-        Serial.print(" ");
-        if (relayState)
-          Serial.println("ON");
-        else Serial.println("OFF");
+    printLuxArray();
+    Serial.print("= ");
+    Serial.print(lux);
+    Serial.print(" ");
+    if (relayState)
+      Serial.println("ON");
+    else Serial.println("OFF");
 #endif
-      } else {
-        // Set longer period to check the current time.
-        // This requires less reads on the RTC when the light management is not
-        // enabled. The accuracy of time when the system is enabled depends on
-        // the watchdog tick (8 s is the longest) and on the wait time.
-        // For this application the accuracy of one second is not needed:
-        // - the "enable" event could be late up to WD_WAIT_DIS_TIME seconds.
-        // - the "disable" event could be late up to WD_WAIT_EN_TIME seconds.
-        wdMatch = (uint16_t) WD_WAIT_DIS_TIME / WD_TICK_TIME;
+  } else {
+    // TODO disable watchdog
+    // TODO set new alarm
 
-        cleanLuxArray();
-        relayState = false;
-      }
+    cleanLuxArray();
+    relayState = false;
+  }
 
-      // Relay output update
-      if (relayState != relayStateMem) {
-        digitalWrite(RELAY_SW_OUT, relayState);
-        relayStateMem = relayState;
-      }
-    }
+  // Relay output update
+  if (relayState != relayStateMem) {
+    digitalWrite(RELAY_SW_OUT, relayState);
+    relayStateMem = relayState;
   }
 }
