@@ -30,7 +30,10 @@
 #include <DS3232RTC.h>
 #include <TwoWire.h>
 
-#define RELAY_SW_OUT            4       // Relay out pin
+#include "PowerUtils.h"
+#include "TimeUtils.h"
+
+#define RELAY_SW_OUT            5       // Relay out pin
 
 #define BLU_STATE               2       // BLE module state pin
 #define BLU_RESET               3       // BLE module reset pin
@@ -42,8 +45,9 @@
 #define SER_RX                  0       // Pin PB0
 #define SER_TX                  1       // Pin PB1 - tiny serial debug pin
 
-#define WD_TICK_TIME            8       // Watchdog tick time [s] (check WD_MODE or datasheet)
-#define WD_WAIT_EN_TIME         24      // Time [s] to count between two sensor read when enabled
+#define WD_MODE                 6       // Watchdog mode (check WD_MODE or datasheet)
+#define WD_TICK_TIME            1       // Watchdog tick time [s] (check WD_MODE or datasheet)
+#define WD_SAMPLE_COUNT         3       // Watchdog tick to count between two sensor read when enabled
 
 #define SAMPLE_COUNT            10      // Light sample count (average measurement)
 #define LUX_TH                  10      // Lux threshold
@@ -51,27 +55,24 @@
 
 // ####################### Constants ########################
 
-// Watchdog interrupt sleep time
-// 0=16ms, 1=32ms, 2=64ms, 3=125ms, 4=250ms, 5=500ms, 6=1 sec, 7=2 sec, 8=4 sec, 9=8sec
-const float WD_MODE[10] = {0.016, 0.032, 0.064, 0.125, 0.25, 0.5, 1, 2, 4, 8};
-
 // ####################### Variables ########################
 
 TwoWire bus;                            // TinyWireM instance (I2C bus)
-BH1750FVI BH1750(bus);                  // Light sensor instance
+//BH1750FVI BH1750(bus);                  // Light sensor instance
 DS3232RTC RTC(bus);                     // RTC clock instance
 
 volatile uint8_t wdCount = 0;
 
 static float luxSamples[SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
-static boolean relayState = false, relayStateMem = false;
+static boolean relayState = false, relayStateMem = false, wake = false;
+struct tm systemTime;
 
 //CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
-const TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     // Central European Summer Time
-const TimeChangeRule CET  = {"CET ", Last, Sun, Oct, 3, 60};      // Central European Standard Time
-Timezone myTZ(CEST, CET);               // Constructor to build object from DST Rules
-TimeChangeRule *tcr;                    // Pointer to the time change rule, use to get TZ abbreviations
+const TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};   // Central European Summer Time
+const TimeChangeRule CET  = {"CET ", Last, Sun, Oct, 3, 60};    // Central European Standard Time
+Timezone TZ(CEST, CET);                                         // Constructor to build object from DST Rules
+TimeChangeRule *tcr;                                            // Pointer to the time change rule, use to get TZ abbreviations
 
 // ########################################################
 // Sensor reading functions
@@ -91,7 +92,9 @@ float sample() {
     tmpLux += luxSamples[i];
   }
 
-  luxSamples[SAMPLE_COUNT - 1] = BH1750.getLightIntensity();  // Get lux value
+  //luxSamples[SAMPLE_COUNT - 1] = BH1750.getLightIntensity();  // TODO Get lux value
+
+  luxSamples[SAMPLE_COUNT - 1] = 9.0;
 
   tmpLux += luxSamples[SAMPLE_COUNT - 1];
 
@@ -145,7 +148,7 @@ boolean checkLightCond(float lux) {
 }
 
 boolean checkEnable(const struct tm &now) {
-  return (now.tm_hour >= 16 && now.tm_hour <= 22);
+  return (now.tm_hour >= 16 && now.tm_hour <= 22 && now.tm_min <= 9);
 }
 
 #ifdef DEBUG
@@ -157,79 +160,6 @@ void printLuxArray() {
 }
 #endif
 
-// ########################################################
-// Time manipulation functions
-// ########################################################
-
-#ifdef DEBUG
-/*
- * Write to serial a digit with zero padding if needed.
- *
- * Param:
- * - int digits
- */
-static void inline printDigits(int digits) {
-  if (digits < 10)
-    Serial.print('0');
-  Serial.print(digits);
-}
-
-/*
- * Writes to Serial the clock (date and time) in human readable format.
- *
- * Param:
- * - struct tm  *tm: struct tm from the time.h (avr-libc)
- * - const char *tz: string for the timezone, if not used set to NULL
- */
-static void printTime(struct tm *tm, const char *tz = NULL) {
-  printDigits(tm->tm_hour);
-  Serial.print(':');
-  printDigits(tm->tm_min);
-  Serial.print(':');
-  printDigits(tm->tm_sec);
-  Serial.print(' ');
-  Serial.print(tm->tm_mday);
-  Serial.print('/');
-  Serial.print(tm->tm_mon + 1);              // avr-libc time.h: months in [0, 11]
-  Serial.print('/');
-  Serial.print(tm->tm_year + 1900);          // avr-libc time.h: years since 1900
-
-  Serial.print(' ');
-  Serial.print(tm->tm_wday);
-
-  if (tz != NULL) {
-    Serial.print(' ');
-    Serial.print(tz);
-  }
-
-  Serial.println();
-}
-#endif
-
-/*
- * Converts the date/time to standard Unix epoch format, using time.h library (avr-libc)
- *
- * Param:
- * - int16_t YYYY: year (given as ex. 2017)
- * - int8_t MM: month [1, 12]
- * - int8_t DD: day of the month [1, 31]
- * - int8_t hh: hour [0, 23]
- * - int8_t mm: minute [0, 59]
- * - int8_t ss: second [0, 59]
- */
-static time_t tmConvert_t(int16_t YYYY, int8_t MM, int8_t DD, int8_t hh, int8_t mm, int8_t ss) {
-  struct tm tm;
-
-  memset((void*) &tm, 0, sizeof(tm));
-
-  tm.tm_year = YYYY - 1900;         // avr-libc time.h: years since 1900
-  tm.tm_mon  = MM - 1;              // avr-libc time.h: months in [0, 11]
-  tm.tm_mday = DD;
-  tm.tm_hour = hh;
-  tm.tm_min  = mm;
-  tm.tm_sec  = ss;
-  return mk_gmtime(&tm);
-}
 
 // ########################################################
 // AVR specific functions
@@ -252,64 +182,6 @@ ISR(PCINT2_vect) {
   // uninitialized interrupt handler.
 }
 
-/*
- * Setup watchdog timeout and start for AVR Mega CPUs. TODO
- */
-void setupWatchdog(float tick) {
-  // 0=16ms, 1=32ms, 2=64ms, 3=128ms, 4=250ms, 5=500ms, 6=1 sec, 7=2 sec, 8=4 sec, 9=8sec
-  uint8_t wdreg, wdmode = 0;
-
-  for (uint8_t i = 0; i < 10; ++i) {
-    if (WD_MODE[i] == tick) {
-      wdmode = i;
-    }
-  }
-
-  if (wdmode > 9)
-    wdmode = 9;
-  wdreg = wdmode & 7;
-
-  if (wdmode > 7)
-    wdreg |= (1 << 5);
-  wdreg |= (1 << WDCE);
-
-  // Clear the reset flag.
-  MCUSR &= ~(1 << WDRF);
-
-  // Start timed sequence: in order to change WDE or the prescaler, we need to
-  // set WDCE (This will allow updates for 4 clock cycles).
-  WDTCSR |= (1 << WDCE) | (1 << WDE);
-
-  // Set new watchdog timeout prescaler value.
-  WDTCSR = wdreg;
-
-  // Enable the WD interrupt (note no reset).
-  WDTCSR |= _BV(WDIE);
-}
-
-/*
- * Stop watchdog count.
- */
-void stopWatchdog() {
-  MCUSR &= ~(1 << WDRF);
-  // Write logical one to WDCE and WDE
-  // Keep old prescaler setting to prevent unintentional time-out
-  WDTCSR |= (1 << WDCE) | (1 << WDE);
-  // Turn off WDT
-  WDTCSR = 0x00;
-}
-
-/*
- * Put the micro to sleep
- */
-static void systemSleep() {
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_enable();
-  sleep_mode();
-
-  // sleeping ...
-  sleep_disable(); // wake up fully
-}
 
 /*
  * Set various power reduction options
@@ -352,6 +224,8 @@ void setup() {
 
   // Setup pins modes
   pinMode(RELAY_SW_OUT, OUTPUT);
+  pinMode(RTC_INT_SQW, INPUT);
+  pinMode(BLU_RESET, OUTPUT);
 
   // BLE Reset high
   digitalWrite(BLU_RESET, HIGH);
@@ -363,27 +237,29 @@ void setup() {
 
     // Exit application code to infinite loop
     exit(retcode);
-  }
+  } else {
+    //  // Real time clock set: UTC time!
+    time_t tSet = makeTime(2018, 11, 22, 21, 9, 00);
+    RTC.set(tSet);
+    TZ.toLocal(tSet, &systemTime, &tcr);
 
-  // Real time clock set: UTC time!
-  time_t t;
-  t = tmConvert_t(2018, 11, 18, 20, 00, 00);
+#ifdef DEBUG
+  printTime(tSet, "UTC");
+  printTime(&systemTime, tcr->abbrev);
+#endif
 
-  if (RTC.set(t) == 0) {
-    // TODO set new alarm
-    Serial.println("RTC OK");
+    // Set alarm to the RTC clock in UTC format!!
+    RTC.setAlarm(ALM1_EVERY_SECOND, systemTime.tm_sec, systemTime.tm_min, systemTime.tm_hour, systemTime.tm_wday);
+    RTC.alarmInterrupt(ALARM_1, true);
   }
 
   // Sensors initialization
   // Light sensor
-  BH1750.powerOn();
-  BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
-  BH1750.setMtreg(200);                 // Set measurement time register to high value
-  delay(100);
-  BH1750.sleep();                       // Send light sensor to sleep
-
-  // Setup watchdog timeout to 8 s (mode 9)
-  setupWatchdog(WD_TICK_TIME);
+//  BH1750.powerOn();
+//  BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
+//  BH1750.setMtreg(200);                 // Set measurement time register to high value
+//  delay(100);
+//  BH1750.sleep();                       // Send light sensor to sleep
 
   // Power settings
   powerReduction();
@@ -396,38 +272,43 @@ void setup() {
 
 void loop() {
 #ifdef DEBUG
-  Serial.println();
   Serial.println("Sleeping...");
+  Serial.println();
   delay(500);
 #endif
-  systemSleep();                        // Send the unit to sleep
+  systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
+
+  // Necessary to reset the alarm flag on RTC!
+  if (RTC.alarm(ALARM_1) || RTC.alarm(ALARM_2)) {
+#ifdef DEBUG
+    Serial.println("Wake up from alarm");
+#endif
+  }
 
   time_t utc = RTC.get();
-  time_t local = myTZ.toLocal(utc, &tcr);
-
-  struct tm tm_local;
-  gmtime_r(&local, &tm_local);
+  TZ.toLocal(utc, &systemTime, &tcr);
 
 #ifdef DEBUG
-  struct tm tm_utc;
-  gmtime_r(&utc, &tm_utc);
-
-  delay(500);
-  printTime(&tm_utc, "UTC");
-  printTime(&tm_local, tcr->abbrev);
-  Serial.print("wdCount = ");
-  Serial.println(wdCount);
+  printTime(utc, "UTC");
+  printTime(&systemTime, tcr->abbrev);
 #endif
 
-  if (checkEnable(tm_local)) {
-    // Enable watchdog
-    setupWatchdog(WD_TICK_TIME);
 
-    // One time mode: the sensor reads and goes into sleep mode autonomously
-    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
+  if (checkEnable(systemTime)) {
+    // Setup watchdog timeout to 8 s (mode 9)
+    setupWatchdog(WD_MODE);
 
-    // Wait for the sensor to be fully awake.
-    delay(500);
+    // Reset alarm interrupt from RTC
+    RTC.alarmInterrupt(ALARM_1, false);
+
+    if (wdCount >= WD_SAMPLE_COUNT) {
+      wdCount = 0;
+
+//    // One time mode: the sensor reads and goes into sleep mode autonomously
+//    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
+//
+//    // Wait for the sensor to be fully awake.
+//    delay(500);
 
     float lux = sample();
     relayState = checkLightCond(lux);
@@ -441,10 +322,22 @@ void loop() {
       Serial.println("ON");
     else Serial.println("OFF");
 #endif
+    }
+
+//#ifdef DEBUG
+//      Serial.print("wdCount: ");
+//      Serial.println(wdCount);
+//#endif
+    wake = true;
   } else {
     // Disable watchdog
     stopWatchdog();
-    // TODO set new alarm
+
+    if (wake) {
+      RTC.setAlarm(ALM2_EVERY_MINUTE, systemTime.tm_sec, systemTime.tm_min, systemTime.tm_hour, systemTime.tm_wday);
+      RTC.alarmInterrupt(ALARM_2, true);
+      wake = false;
+    }
 
     cleanLuxArray();
     relayState = false;

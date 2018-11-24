@@ -6,9 +6,8 @@
 		<project>ATMegaCore</project>
 		<project>ATTinyCore</project>
 		<project>BH1750FVI</project>
-		<project>DS1307RTC</project>
 		<project>DS3232RTC</project>
-		<project>TinyWireM</project>
+		<project>TimeZone</project>
 		<project>Wire</project>
 	</projects>
 	<buildSpec>
