@@ -28,22 +28,16 @@
 #include <Timezone.h>                   // https://github.com/JChristensen/Timezone
 #include <BH1750FVI.h>
 #include <DS3232RTC.h>
-#include <TwoWire.h>
 
 #include "PowerUtils.h"
 #include "TimeUtils.h"
 
 #define RELAY_SW_OUT            5       // Relay out pin
 
-#define BLU_STATE               2       // BLE module state pin
-#define BLU_RESET               3       // BLE module reset pin
-
 // Serial defines
-#define SERIAL_BAUD             9600    // For AT mode and data mode (CC41, HM-10 and MLT-BT05)
+#define SERIAL_BAUD             9600    // Serial baud per second
 
 #define RTC_INT_SQW             4       // INT/SQW pin from RTC
-#define SER_RX                  0       // Pin PB0
-#define SER_TX                  1       // Pin PB1 - tiny serial debug pin
 
 #define WD_MODE                 6       // Watchdog mode (check WD_MODE or datasheet)
 #define WD_TICK_TIME            1       // Watchdog tick time [s] (check WD_MODE or datasheet)
@@ -52,6 +46,9 @@
 #define SAMPLE_COUNT            10      // Light sample count (average measurement)
 #define LUX_TH                  10      // Lux threshold
 #define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
+
+#define RTC_CONTROL 0x0E                // TODO remove
+#define RTC_STATUS 0x0F
 
 // ####################### Constants ########################
 
@@ -62,6 +59,7 @@ TwoWire bus;                            // TinyWireM instance (I2C bus)
 DS3232RTC RTC(bus);                     // RTC clock instance
 
 volatile uint8_t wdCount = 0;
+volatile bool rtcWakeUp = false;
 
 static float luxSamples[SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
@@ -172,14 +170,12 @@ ISR(WDT_vect) {
   wdCount++;
 }
 
+
 /*
- *  PCINT Interrupt Service Routine (unused)
+ *  PCINT Interrupt Service Routine
  */
 ISR(PCINT2_vect) {
-  wdCount = 0;
-  // Don't do anything here but we must include this
-  // block of code otherwise the interrupt calls an
-  // uninitialized interrupt handler.
+  rtcWakeUp = true;
 }
 
 
@@ -224,11 +220,7 @@ void setup() {
 
   // Setup pins modes
   pinMode(RELAY_SW_OUT, OUTPUT);
-  pinMode(RTC_INT_SQW, INPUT);
-  pinMode(BLU_RESET, OUTPUT);
-
-  // BLE Reset high
-  digitalWrite(BLU_RESET, HIGH);
+  pinMode(RTC_INT_SQW, INPUT_PULLUP);
 
   // RTC connection check
   if ((retcode = RTC.checkCon()) != 0) {
@@ -238,19 +230,39 @@ void setup() {
     // Exit application code to infinite loop
     exit(retcode);
   } else {
-    //  // Real time clock set: UTC time!
-    time_t tSet = makeTime(2018, 11, 22, 21, 9, 00);
-    RTC.set(tSet);
-    TZ.toLocal(tSet, &systemTime, &tcr);
+//    byte statusReg = RTC.readRTC(RTC_STATUS);
+//    Serial.print("statusReg = ");
+//    Serial.println(statusReg, BIN);
+//
+//    byte controlReg = RTC.readRTC(RTC_CONTROL);
+//    Serial.print("controlReg = ");
+//    Serial.println(controlReg, BIN);
+
+    // Real time clock set: UTC time!
+    time_t utc = makeTime(2018, 11, 24, 20, 9, 40);
+    RTC.set(utc);
+    //  time_t utc = RTC.get();
+    TZ.toLocal(utc, &systemTime, &tcr);
 
 #ifdef DEBUG
-  printTime(tSet, "UTC");
-  printTime(&systemTime, tcr->abbrev);
+    printTime(utc, "UTC");
+    printTime(&systemTime, tcr->abbrev);
 #endif
 
     // Set alarm to the RTC clock in UTC format!!
-    RTC.setAlarm(ALM1_EVERY_SECOND, systemTime.tm_sec, systemTime.tm_min, systemTime.tm_hour, systemTime.tm_wday);
+    RTC.setAlarm(ALM1_EVERY_SECOND, 0, 0, 0, 0);
+    // Clear the alarm flag
+    RTC.alarm(ALARM_1);
+
     RTC.alarmInterrupt(ALARM_1, true);
+
+//    statusReg = RTC.readRTC(RTC_STATUS);
+//    Serial.print("statusReg = ");
+//    Serial.println(statusReg, BIN);
+//
+//    controlReg = RTC.readRTC(RTC_CONTROL);
+//    Serial.print("controlReg = ");
+//    Serial.println(controlReg, BIN);
   }
 
   // Sensors initialization
@@ -278,12 +290,26 @@ void loop() {
 #endif
   systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
 
-  // Necessary to reset the alarm flag on RTC!
-  if (RTC.alarm(ALARM_1) || RTC.alarm(ALARM_2)) {
+//  byte controlReg = RTC.readRTC(RTC_CONTROL);
+//  Serial.print("controlReg_1 = ");
+//  Serial.println(controlReg, BIN);
+//
+//  byte statusReg = RTC.readRTC(RTC_STATUS);
+//  Serial.print("statusReg_1 = ");
+//  Serial.println(statusReg, BIN);
+
+  if (rtcWakeUp) {
+    rtcWakeUp = false;
+    RTC.alarm(ALARM_1);                 // Necessary to reset the alarm flag on RTC!
+
 #ifdef DEBUG
     Serial.println("Wake up from alarm");
 #endif
   }
+
+//  statusReg = RTC.readRTC(RTC_STATUS);
+//  Serial.print("statusReg_2 = ");
+//  Serial.println(statusReg, BIN);
 
   time_t utc = RTC.get();
   TZ.toLocal(utc, &systemTime, &tcr);
@@ -293,13 +319,16 @@ void loop() {
   printTime(&systemTime, tcr->abbrev);
 #endif
 
-
   if (checkEnable(systemTime)) {
     // Setup watchdog timeout to 8 s (mode 9)
     setupWatchdog(WD_MODE);
 
     // Reset alarm interrupt from RTC
     RTC.alarmInterrupt(ALARM_1, false);
+
+//    byte controlReg = RTC.readRTC(RTC_CONTROL);
+//    Serial.print("controlReg_2 = ");
+//    Serial.println(controlReg, BIN);
 
     if (wdCount >= WD_SAMPLE_COUNT) {
       wdCount = 0;
@@ -324,18 +353,18 @@ void loop() {
 #endif
     }
 
-//#ifdef DEBUG
-//      Serial.print("wdCount: ");
-//      Serial.println(wdCount);
-//#endif
+#ifdef DEBUG
+      Serial.print("wdCount: ");
+      Serial.println(wdCount);
+#endif
     wake = true;
   } else {
     // Disable watchdog
     stopWatchdog();
 
     if (wake) {
-      RTC.setAlarm(ALM2_EVERY_MINUTE, systemTime.tm_sec, systemTime.tm_min, systemTime.tm_hour, systemTime.tm_wday);
-      RTC.alarmInterrupt(ALARM_2, true);
+      RTC.alarm(ALARM_1);                   // TODO reset status flag in alarmInterrupt???
+      RTC.alarmInterrupt(ALARM_1, true);
       wake = false;
     }
 
