@@ -16,8 +16,8 @@
  */
 
 /*
- * Built for ATMega 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b001
+ * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
+ * VERSION 2.0b003
  */
 
 #include <avr/sleep.h>
@@ -25,46 +25,40 @@
 #include <avr/pgmspace.h>
 
 #include <Arduino.h>
-#include <Timezone.h>                   // https://github.com/JChristensen/Timezone
+#include <Timezone.h>
 #include <BH1750FVI.h>
 #include <DS3232RTC.h>
 
 #include "PowerUtils.h"
 #include "TimeUtils.h"
 
-#define RELAY_SW_OUT            5       // Relay out pin
-
-// Serial defines
 #define SERIAL_BAUD             9600    // Serial baud per second
 
+// Pins
 #define RTC_INT_SQW             4       // INT/SQW pin from RTC
-
-#define WD_MODE                 6       // Watchdog mode (check WD_MODE or datasheet)
-#define WD_TICK_TIME            1       // Watchdog tick time [s] (check WD_MODE or datasheet)
-#define WD_SAMPLE_COUNT         3       // Watchdog tick to count between two sensor read when enabled
+#define RELAY_SW_OUT            5       // Relay out pin
 
 #define SAMPLE_COUNT            10      // Light sample count (average measurement)
 #define LUX_TH                  10      // Lux threshold
 #define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
 
-#define RTC_CONTROL 0x0E                // TODO remove
-#define RTC_STATUS 0x0F
+//#define RTC_CONTROL 0x0E                // TODO remove
+//#define RTC_STATUS 0x0F
 
-// ####################### Constants ########################
+// ################################# Constants ################################
 
-// ####################### Variables ########################
+// ################################# Variables ################################
 
 TwoWire bus;                            // TinyWireM instance (I2C bus)
 //BH1750FVI BH1750(bus);                  // Light sensor instance
 DS3232RTC RTC(bus);                     // RTC clock instance
 
-volatile uint8_t wdCount = 0;
 volatile bool rtcWakeUp = false;
 
 static float luxSamples[SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
-static boolean relayState = false, relayStateMem = false, wake = false;
-struct tm systemTime;
+static boolean relayState = false, relayStateMem = false;
+static struct tm utcTime, localTime;
 
 //CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
 const TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};   // Central European Summer Time
@@ -72,9 +66,9 @@ const TimeChangeRule CET  = {"CET ", Last, Sun, Oct, 3, 60};    // Central Europ
 Timezone TZ(CEST, CET);                                         // Constructor to build object from DST Rules
 TimeChangeRule *tcr;                                            // Pointer to the time change rule, use to get TZ abbreviations
 
-// ########################################################
+// ############################################################################
 // Sensor reading functions
-// ########################################################
+// ###########################################################################
 
 /*
  * Sample from light sensor.
@@ -146,7 +140,7 @@ boolean checkLightCond(float lux) {
 }
 
 boolean checkEnable(const struct tm &now) {
-  return (now.tm_hour >= 16 && now.tm_hour <= 22 && now.tm_min <= 9);
+  return (now.tm_hour >= 16 && now.tm_hour <= 22 && now.tm_min <= 10);
 }
 
 #ifdef DEBUG
@@ -159,17 +153,9 @@ void printLuxArray() {
 #endif
 
 
-// ########################################################
+// ############################################################################
 // AVR specific functions
-// ########################################################
-
-/*
- * Watchdog Interrupt Service Routine
- */
-ISR(WDT_vect) {
-  wdCount++;
-}
-
+// ############################################################################
 
 /*
  *  PCINT Interrupt Service Routine
@@ -210,8 +196,6 @@ static void powerReduction() {
 void setup() {
   uint8_t retcode;
 
-  // TODO  1Mhz clock?
-
   Serial.begin(SERIAL_BAUD);
 
   // I2C begin() is called BEFORE sensors library "begin" methods:
@@ -230,43 +214,26 @@ void setup() {
     // Exit application code to infinite loop
     exit(retcode);
   } else {
-//    byte statusReg = RTC.readRTC(RTC_STATUS);
-//    Serial.print("statusReg = ");
-//    Serial.println(statusReg, BIN);
-//
-//    byte controlReg = RTC.readRTC(RTC_CONTROL);
-//    Serial.print("controlReg = ");
-//    Serial.println(controlReg, BIN);
-
     // Real time clock set: UTC time!
-    time_t utc = makeTime(2018, 11, 24, 20, 9, 40);
-    RTC.set(utc);
-    //  time_t utc = RTC.get();
-    TZ.toLocal(utc, &systemTime, &tcr);
+    //makeTime(&utcTime, 2018, 11, 28, 20, 9, 45);
+    //RTC.write(&utcTime);
+    RTC.read(&utcTime);
+    TZ.toLocal(&utcTime, &localTime, &tcr);
 
 #ifdef DEBUG
-    printTime(utc, "UTC");
-    printTime(&systemTime, tcr->abbrev);
+    printTime(&utcTime, "UTC");
+    printTime(&localTime, tcr->abbrev);
 #endif
 
     // Set alarm to the RTC clock in UTC format!!
-    RTC.setAlarm(ALM1_EVERY_SECOND, 0, 0, 0, 0);
+    RTC.setAlarm(ALM1_MATCH_HOURS, (utcTime.tm_sec + 5) % 60, utcTime.tm_min, utcTime.tm_hour, utcTime.tm_wday);
     // Clear the alarm flag
     RTC.alarm(ALARM_1);
-
+    // Set the alarm interrupt
     RTC.alarmInterrupt(ALARM_1, true);
-
-//    statusReg = RTC.readRTC(RTC_STATUS);
-//    Serial.print("statusReg = ");
-//    Serial.println(statusReg, BIN);
-//
-//    controlReg = RTC.readRTC(RTC_CONTROL);
-//    Serial.print("controlReg = ");
-//    Serial.println(controlReg, BIN);
   }
 
-  // Sensors initialization
-  // Light sensor
+  // Light Sensor initialization
 //  BH1750.powerOn();
 //  BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
 //  BH1750.setMtreg(200);                 // Set measurement time register to high value
@@ -290,48 +257,21 @@ void loop() {
 #endif
   systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
 
-//  byte controlReg = RTC.readRTC(RTC_CONTROL);
-//  Serial.print("controlReg_1 = ");
-//  Serial.println(controlReg, BIN);
-//
-//  byte statusReg = RTC.readRTC(RTC_STATUS);
-//  Serial.print("statusReg_1 = ");
-//  Serial.println(statusReg, BIN);
-
   if (rtcWakeUp) {
     rtcWakeUp = false;
     RTC.alarm(ALARM_1);                 // Necessary to reset the alarm flag on RTC!
-
-#ifdef DEBUG
-    Serial.println("Wake up from alarm");
-#endif
   }
 
-//  statusReg = RTC.readRTC(RTC_STATUS);
-//  Serial.print("statusReg_2 = ");
-//  Serial.println(statusReg, BIN);
-
-  time_t utc = RTC.get();
-  TZ.toLocal(utc, &systemTime, &tcr);
+  RTC.read(&utcTime);
+  TZ.toLocal(&utcTime, &localTime, &tcr);
 
 #ifdef DEBUG
-  printTime(utc, "UTC");
-  printTime(&systemTime, tcr->abbrev);
+  printTime(&utcTime, "UTC");
+  printTime(&localTime, tcr->abbrev);
 #endif
 
-  if (checkEnable(systemTime)) {
-    // Setup watchdog timeout to 8 s (mode 9)
-    setupWatchdog(WD_MODE);
-
-    // Reset alarm interrupt from RTC
-    RTC.alarmInterrupt(ALARM_1, false);
-
-//    byte controlReg = RTC.readRTC(RTC_CONTROL);
-//    Serial.print("controlReg_2 = ");
-//    Serial.println(controlReg, BIN);
-
-    if (wdCount >= WD_SAMPLE_COUNT) {
-      wdCount = 0;
+  if (checkEnable(localTime)) {
+    RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + 3) % 60, 0, 0, 0);
 
 //    // One time mode: the sensor reads and goes into sleep mode autonomously
 //    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
@@ -351,22 +291,11 @@ void loop() {
       Serial.println("ON");
     else Serial.println("OFF");
 #endif
-    }
-
-#ifdef DEBUG
-      Serial.print("wdCount: ");
-      Serial.println(wdCount);
-#endif
-    wake = true;
   } else {
-    // Disable watchdog
-    stopWatchdog();
-
-    if (wake) {
-      RTC.alarm(ALARM_1);                   // TODO reset status flag in alarmInterrupt???
-      RTC.alarmInterrupt(ALARM_1, true);
-      wake = false;
-    }
+//    TODO set next alarm
+//    makeTime(&utcTime, 2018, 11, 28, 20, 9, 45);
+//    RTC.write(&utcTime);
+//    RTC.setAlarm(ALM1_MATCH_HOURS, 50, 9, 20, utcTime.tm_wday);
 
     cleanLuxArray();
     relayState = false;

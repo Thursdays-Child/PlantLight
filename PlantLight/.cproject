@@ -153,11 +153,11 @@
 									<listOptionValue builtIn="false" value="atmegacore"/>
 								</option>
 								<option id="de.innot.avreclipse.cpplinker.option.libpath.1351984638" name="Libraries Path (-L)" superClass="de.innot.avreclipse.cpplinker.option.libpath" useByScannerDiscovery="false" valueType="stringList">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DS3232RTC/ATMega328}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ATMegaCore/ATMega328_8Mhz}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BH1750FVI/ATMega328P}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TimeZone/ATMega328}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Wire/ATMega328}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DS3232RTC/ATMega328P_1Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ATMegaCore/ATMega328P_1Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BH1750FVI/ATMega328P_1Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TimeZone/ATMega328P_1Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Wire/ATMega328P_1Mhz}&quot;"/>
 								</option>
 								<option id="de.innot.avreclipse.cpplinker.option.otherlinkargs.624445199" name="Other Arguments" superClass="de.innot.avreclipse.cpplinker.option.otherlinkargs" useByScannerDiscovery="false" value="-Wl,-gc-sections " valueType="string"/>
 								<inputType id="de.innot.avreclipse.tool.cpplinker.input.1681630972" name="OBJ Files" superClass="de.innot.avreclipse.tool.cpplinker.input">
@@ -180,10 +180,105 @@
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
 				<externalSettings containerId="BH1750FVI;de.innot.avreclipse.configuration.lib.release.106305086" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
-				<externalSettings containerId="ATMegaCore;de.innot.avreclipse.configuration.lib.release.533789271.345889354.332645484.981197877" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
-				<externalSettings containerId="DS3232RTC;de.innot.avreclipse.configuration.lib.release.106305086.2057480405.972080966" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
-				<externalSettings containerId="Wire;de.innot.avreclipse.configuration.lib.release.106305086.1844661959" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
-				<externalSettings containerId="TimeZone;de.innot.avreclipse.configuration.lib.release.106305086.2057480405.1383400329.254342340" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="ATMegaCore;de.innot.avreclipse.configuration.lib.release.533789271.345889354.310797356" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="DS3232RTC;de.innot.avreclipse.configuration.lib.release.106305086.2057480405.144091031" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="Wire;de.innot.avreclipse.configuration.lib.release.106305086" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="TimeZone;de.innot.avreclipse.configuration.lib.release.106305086.2057480405.1383400329" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+			</storageModule>
+		</cconfiguration>
+		<cconfiguration id="de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864" moduleId="org.eclipse.cdt.core.settings" name="Debug_328P">
+				<externalSettings/>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactName="${ProjName}" buildArtefactType="de.innot.avreclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=de.innot.avreclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" description="Debug on breadboard with ATMega328P" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GASErrorParser;org.eclipse.cdt.core.GLDErrorParser" id="de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864" name="Debug_328P" parent="de.innot.avreclipse.configuration.app.debug" postannouncebuildStep="" postbuildStep="" preannouncebuildStep="" prebuildStep="">
+					<folderInfo id="de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864." name="/" resourcePath="">
+						<toolChain errorParsers="" id="de.innot.avreclipse.toolchain.winavr.app.debug.105054341" name="AVR-GCC Toolchain" superClass="de.innot.avreclipse.toolchain.winavr.app.debug">
+							<option id="de.innot.avreclipse.toolchain.options.toolchain.objcopy.flash.app.debug.1050270033" name="Generate HEX file for Flash memory" superClass="de.innot.avreclipse.toolchain.options.toolchain.objcopy.flash.app.debug" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+							<option id="de.innot.avreclipse.toolchain.options.toolchain.objcopy.eeprom.app.debug.1946516341" name="Generate HEX file for EEPROM" superClass="de.innot.avreclipse.toolchain.options.toolchain.objcopy.eeprom.app.debug" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+							<option id="de.innot.avreclipse.toolchain.options.toolchain.objdump.app.debug.323424970" name="Generate Extended Listing (Source + generated Assembler)" superClass="de.innot.avreclipse.toolchain.options.toolchain.objdump.app.debug" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+							<option id="de.innot.avreclipse.toolchain.options.toolchain.size.app.debug.632831824" name="Print Size" superClass="de.innot.avreclipse.toolchain.options.toolchain.size.app.debug" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+							<option id="de.innot.avreclipse.toolchain.options.toolchain.avrdude.app.debug.1889951507" name="AVRDude" superClass="de.innot.avreclipse.toolchain.options.toolchain.avrdude.app.debug" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+							<targetPlatform binaryParser="org.eclipse.cdt.core.ELF" id="de.innot.avreclipse.targetplatform.winavr.app.debug.1633814034" name="AVR Cross-Target" superClass="de.innot.avreclipse.targetplatform.winavr.app.debug"/>
+							<builder buildPath="${workspace_loc:/ScoreBoard/Debug}" errorParsers="org.eclipse.cdt.core.MakeErrorParser" id="de.innot.avreclipse.target.builder.winavr.app.debug.540135684" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="AVR GNU Make Builder" superClass="de.innot.avreclipse.target.builder.winavr.app.debug"/>
+							<tool command="avr-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GASErrorParser" id="de.innot.avreclipse.tool.assembler.winavr.app.debug.645280086" name="AVR Assembler" superClass="de.innot.avreclipse.tool.assembler.winavr.app.debug">
+								<option id="de.innot.avreclipse.assembler.option.debug.level.2096450662" name="Generate Debugging Info" superClass="de.innot.avreclipse.assembler.option.debug.level" useByScannerDiscovery="false"/>
+								<inputType id="de.innot.avreclipse.tool.assembler.input.1567325189" superClass="de.innot.avreclipse.tool.assembler.input"/>
+							</tool>
+							<tool command="avr-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="de.innot.avreclipse.tool.compiler.winavr.app.debug.1641266086" name="AVR Compiler" superClass="de.innot.avreclipse.tool.compiler.winavr.app.debug">
+								<option id="de.innot.avreclipse.compiler.option.debug.level.1560990111" name="Generate Debugging Info" superClass="de.innot.avreclipse.compiler.option.debug.level" useByScannerDiscovery="false" value="de.innot.avreclipse.compiler.option.debug.level.none" valueType="enumerated"/>
+								<option id="de.innot.avreclipse.compiler.option.optimize.896093429" name="Optimization Level" superClass="de.innot.avreclipse.compiler.option.optimize" useByScannerDiscovery="false" value="de.innot.avreclipse.compiler.optimize.size" valueType="enumerated"/>
+								<option id="de.innot.avreclipse.compiler.option.incpath.331527303" name="Include Paths (-I)" superClass="de.innot.avreclipse.compiler.option.incpath" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+								</option>
+								<inputType id="de.innot.avreclipse.compiler.winavr.input.1397130045" name="C Source Files" superClass="de.innot.avreclipse.compiler.winavr.input"/>
+							</tool>
+							<tool command="avr-g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="de.innot.avreclipse.tool.cppcompiler.app.debug.1023904161" name="AVR C++ Compiler" superClass="de.innot.avreclipse.tool.cppcompiler.app.debug">
+								<option id="de.innot.avreclipse.cppcompiler.option.debug.level.668257736" name="Generate Debugging Info" superClass="de.innot.avreclipse.cppcompiler.option.debug.level" useByScannerDiscovery="false" value="de.innot.avreclipse.cppcompiler.option.debug.level.none" valueType="enumerated"/>
+								<option id="de.innot.avreclipse.cppcompiler.option.optimize.446172983" name="Optimization Level" superClass="de.innot.avreclipse.cppcompiler.option.optimize" useByScannerDiscovery="false" value="de.innot.avreclipse.cppcompiler.optimize.size" valueType="enumerated"/>
+								<option id="de.innot.avreclipse.cppcompiler.option.incpath.791998695" name="Include Paths (-I)" superClass="de.innot.avreclipse.cppcompiler.option.incpath" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BH1750FVI}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DS3232RTC}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ATMegaCore}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TimeZone}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Wire}&quot;"/>
+								</option>
+								<option id="de.innot.avreclipse.cppcompiler.option.otherflags.1692738269" name="Other flags" superClass="de.innot.avreclipse.cppcompiler.option.otherflags" useByScannerDiscovery="false" value="-ffunction-sections -fdata-sections -fno-use-cxa-atexit -Wno-unused-local-typedefs" valueType="string"/>
+								<option id="de.innot.avreclipse.cppcompiler.option.def.1303753065" name="Define Syms (-D)" superClass="de.innot.avreclipse.cppcompiler.option.def" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="DEBUG"/>
+								</option>
+								<option id="de.innot.avreclipse.cppcompiler.option.optimize.packstruct.1875748519" name="Pack structs (-fpack-struct)" superClass="de.innot.avreclipse.cppcompiler.option.optimize.packstruct" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<inputType id="de.innot.avreclipse.cppcompiler.input.483328847" superClass="de.innot.avreclipse.cppcompiler.input"/>
+							</tool>
+							<tool id="de.innot.avreclipse.tool.linker.winavr.app.debug.1735478724" name="AVR C Linker" superClass="de.innot.avreclipse.tool.linker.winavr.app.debug"/>
+							<tool command="avr-g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="de.innot.avreclipse.tool.cpplinker.app.debug.927959228" name="AVR C++ Linker" superClass="de.innot.avreclipse.tool.cpplinker.app.debug">
+								<option id="de.innot.avreclipse.cpplinker.option.libs.277439422" name="Libraries (-l)" superClass="de.innot.avreclipse.cpplinker.option.libs" useByScannerDiscovery="false" valueType="libs">
+									<listOptionValue builtIn="false" value="ds3232rtc"/>
+									<listOptionValue builtIn="false" value="bh1750fvi"/>
+									<listOptionValue builtIn="false" value="timezone"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="wire"/>
+									<listOptionValue builtIn="false" value="atmegacore"/>
+								</option>
+								<option id="de.innot.avreclipse.cpplinker.option.libpath.46295825" name="Libraries Path (-L)" superClass="de.innot.avreclipse.cpplinker.option.libpath" useByScannerDiscovery="false" valueType="stringList">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DS3232RTC/ATMega328P_1Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ATMegaCore/ATMega328P_8Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BH1750FVI/ATMega328P_1Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TimeZone/ATMega328P_1Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Wire/ATMega328P_1Mhz}&quot;"/>
+								</option>
+								<option id="de.innot.avreclipse.cpplinker.option.otherlinkargs.217022456" name="Other Arguments" superClass="de.innot.avreclipse.cpplinker.option.otherlinkargs" useByScannerDiscovery="false" value="-Wl,-gc-sections " valueType="string"/>
+								<inputType id="de.innot.avreclipse.tool.cpplinker.input.2014303018" name="OBJ Files" superClass="de.innot.avreclipse.tool.cpplinker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+							</tool>
+							<tool id="de.innot.avreclipse.tool.archiver.winavr.base.1683423613" name="AVR Archiver" superClass="de.innot.avreclipse.tool.archiver.winavr.base"/>
+							<tool id="de.innot.avreclipse.tool.objdump.winavr.app.debug.1964476569" name="AVR Create Extended Listing" superClass="de.innot.avreclipse.tool.objdump.winavr.app.debug"/>
+							<tool command="-avr-objcopy" commandLinePattern="${COMMAND} ${FLAGS} ${INPUTS} ${OUTPUT}" errorParsers="" id="de.innot.avreclipse.tool.objcopy.flash.winavr.app.debug.754823192" name="AVR Create Flash image" superClass="de.innot.avreclipse.tool.objcopy.flash.winavr.app.debug"/>
+							<tool id="de.innot.avreclipse.tool.objcopy.eeprom.winavr.app.debug.1228679301" name="AVR Create EEPROM image" superClass="de.innot.avreclipse.tool.objcopy.eeprom.winavr.app.debug"/>
+							<tool command="-avr-size" commandLinePattern="${COMMAND} ${FLAGS} ${INPUTS}" errorParsers="" id="de.innot.avreclipse.tool.size.winavr.app.debug.358886745" name="Print Size" superClass="de.innot.avreclipse.tool.size.winavr.app.debug"/>
+							<tool command="${AVRDUDEPATH}avrdude" commandLinePattern="${COMMAND} ${FLAGS}" errorParsers="" id="de.innot.avreclipse.tool.avrdude.app.debug.818396200" name="AVRDude" superClass="de.innot.avreclipse.tool.avrdude.app.debug"/>
+						</toolChain>
+					</folderInfo>
+					<sourceEntries>
+						<entry excluding="Prototype/makefile (Case Conflict 1)|Makefile|Debug/makefile (Case Conflict 1)" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
+				<externalSettings containerId="BH1750FVI;de.innot.avreclipse.configuration.lib.release.106305086" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="ATMegaCore;de.innot.avreclipse.configuration.lib.release.533789271.345889354.310797356" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="DS3232RTC;de.innot.avreclipse.configuration.lib.release.106305086.2057480405.144091031" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="Wire;de.innot.avreclipse.configuration.lib.release.106305086" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="TimeZone;de.innot.avreclipse.configuration.lib.release.106305086.2057480405.1383400329" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
@@ -237,6 +332,9 @@
 		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.debug.381805049.216597436.850358383.628191296;de.innot.avreclipse.configuration.app.debug.381805049.216597436.850358383.628191296.;de.innot.avreclipse.tool.cppcompiler.app.debug.1881441358;de.innot.avreclipse.cppcompiler.input.399283472">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864;de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864.;de.innot.avreclipse.tool.compiler.winavr.app.debug.1641266086;de.innot.avreclipse.compiler.winavr.input.1397130045">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.debug.381805049.946985317;de.innot.avreclipse.configuration.app.debug.381805049.946985317.;de.innot.avreclipse.tool.compiler.winavr.app.debug.555179111;de.innot.avreclipse.compiler.winavr.input.2068221867">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
@@ -269,6 +367,9 @@
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.debug.381805049.216597436.850358383.628191296;de.innot.avreclipse.configuration.app.debug.381805049.216597436.850358383.628191296.;de.innot.avreclipse.tool.compiler.winavr.app.debug.1451853334;de.innot.avreclipse.compiler.winavr.input.498444829">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864;de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864.;de.innot.avreclipse.tool.cppcompiler.app.debug.1023904161;de.innot.avreclipse.cppcompiler.input.483328847">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

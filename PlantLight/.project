@@ -11,6 +11,7 @@
 		<project>TimeZone</project>
 		<project>TinyWireM</project>
 		<project>Wire</project>
+		<project>AttinyCore</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
