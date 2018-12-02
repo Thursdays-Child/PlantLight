@@ -35,8 +35,10 @@
 #define SERIAL_BAUD          9600       // Serial baud per second
 
 // Pins
-#define RTC_INT_SQW             4       // INT/SQW pin from RTC
-#define RELAY_SW_OUT            5       // Relay out pin
+#define RTC_INT_SQW             2       // INT/SQW pin from RTC: external interrupt
+#define RELAY_SW_OUT            5       // Relay output pin
+#define SET_TIME_IN             4       // Set time mode input pin: pin change interrupt
+// TODO time mode LED
 
 #define ENABLE_H               16       // Enable hour (default)
 #define DISABLE_H              23       // Disable hour (default)
@@ -62,6 +64,7 @@ DS3232RTC RTC(bus);                     // RTC clock instance
 static float luxSamples[MAX_SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
 static boolean relayState = false;
+volatile boolean setTimeMode = false;
 static struct tm utcTime, localTime;
 
 //CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
@@ -176,15 +179,91 @@ void printLuxArray() {
 }
 #endif
 
+/**
+ * Set the date and time by entering the following on the serial input:
+ * year,month,day,hour,minute,second,
+ *
+ * Where
+ *  year can be two or four digits,
+ *  month is 1-12,
+ *  day is 1-31,
+ *  hour is 0-23, and
+ *  minute and second are 0-59.
+ *
+ * Entering the final comma delimiter (after "second") will avoid a TODO
+ * one-second timeout and will allow the RTC to be set more accurately.
+ *
+ * No validity checking is done, invalid values or incomplete syntax
+ * in the input will result in an incorrect RTC setting.
+ */
+// TODO exit from serial (quit?)
+boolean setTimeSerial() {
+  int16_t YYYY;                 // Year in 4 digit format
+  int8_t MM, DD, hh, mm, ss;
+  time_t t;
+
+  // Check for input to set the RTC, minimum length is 12, i.e. yy,m,d,h,m,s
+  if (Serial.available() >= 12) {
+    int y = Serial.parseInt();
+    if (y >= 100 && y < 1000) {
+      Serial.println(F("Error: Year must be two digits or four digits!"));
+    } else {
+      if (y >= 1000) {
+        YYYY = y;
+      } else {
+        // (y < 100)
+        YYYY = y + 2000;
+      }
+
+      MM = Serial.parseInt();
+      DD = Serial.parseInt();
+      hh = Serial.parseInt();
+      mm = Serial.parseInt();
+      ss = Serial.parseInt();
+
+      t = makeTime(YYYY, MM, DD, hh, mm, ss);
+
+      // Use the time_t value to ensure correct weekday is set
+      RTC.set(t);
+
+      // Set UTC application time
+      memset((void*) &utcTime, 0, sizeof(utcTime));
+      gmtime_r(&t, &utcTime);
+
+      // Convert UTC time in local time
+      TZ.toLocal(&utcTime, &localTime, &tcr);
+
+      Serial.println(F("RTC set to: "));
+      printTime(&utcTime, "UTC");
+      printTime(&localTime, tcr->abbrev);
+      Serial.println();
+
+      // Dump any extraneous input
+      while (Serial.available() > 0)
+        Serial.read();
+    }
+  return true;
+  }
+return false;
+}
 
 // ############################################################################
 // AVR specific functions
 // ############################################################################
 
 /*
- *  PCINT Interrupt Service Routine
+ *  PCINT Interrupt Service Routines
  */
 ISR(PCINT2_vect) {
+  setTimeMode = true;
+}
+
+/*
+ *  INT0 Interrupt Service Routines
+ *
+ *  External interrupt on PD2
+ */
+ISR(INT0_vect) {
   // Don't do anything here but we must include this
   // block of code otherwise the interrupt calls an
   // uninitialized interrupt handler.
@@ -229,6 +308,7 @@ void setup() {
   // Setup pins modes
   pinMode(RELAY_SW_OUT, OUTPUT);
   pinMode(RTC_INT_SQW, INPUT_PULLUP);
+  pinMode(SET_TIME_IN, INPUT_PULLUP);
 
   // RTC connection check
   if ((retcode = RTC.checkCon()) != 0) {
@@ -244,7 +324,7 @@ void setup() {
   opt.mmE         = 0;//ENA_DIS_MIN;
   opt.hhD         = 21;//DISABLE_H;
   opt.mmD         = 1;//ENA_DIS_MIN;
-  opt.poll        = POLLING_INT;
+  opt.poll        = 20; // TODO POLLING_INT;
   opt.sampleCount = SAMPLE_COUNT;
   opt.luxTh       = LUX_TH;
   opt.luxThHys    = LUX_TH_HIST;
@@ -254,15 +334,15 @@ void setup() {
   }
 
   // Real time clock set: UTC time!
-  makeTime(&utcTime, 2018, 11, 28, 20, 59, 55);
-  RTC.write(&utcTime);
-  //RTC.read(&utcTime);
+  //makeTime(&utcTime, 2018, 11, 28, 12, 59, 55);
+  //RTC.write(&utcTime);
+  RTC.read(&utcTime);
   TZ.toLocal(&utcTime, &localTime, &tcr);
 
-//#ifdef DEBUG
-//  printTime(&utcTime, "UTC");
-//  printTime(&localTime, tcr->abbrev);
-//#endif
+#ifdef DEBUG
+  printTime(&utcTime, "UTC");
+  printTime(&localTime, tcr->abbrev);
+#endif
 
   // Set alarm to the RTC clock in UTC format!!
   RTC.setAlarm(ALM2_MATCH_HOURS, opt.mmE, opt.hhE, 0);
@@ -282,9 +362,11 @@ void setup() {
   powerReduction();
 
   // Interrupt configuration
-  PCMSK2 |= _BV(PCINT20);               // Pin change mask: listen to portD bit 4 (D4) (RTC_INT_SQW)
-  PCMSK2 |= _BV(PCINT16);               // Pin change mask: listen to portD bit 0 (D0) (Serial RX)
+  PCMSK2 |= _BV(PCINT20);               // Pin change mask: listen to portD bit 4 (D4) (SET_TIME_IN)
   PCICR  |= _BV(PCIE2);                 // Enable PCINT interrupt on portD
+
+  EICRA |= _BV(ISC01);                  // Set INT0 to trigger on falling edge (RTC_INT_SQW)
+  EIMSK |= _BV(INT0);                   // Turns on INT0
 }
 
 void loop() {
@@ -297,52 +379,60 @@ void loop() {
   printTime(&localTime, tcr->abbrev);
 #endif
 
-//  TODO if (checkEnable(localTime)) {
-  if (checkEnable(utcTime)) {
-    RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + opt.poll) % 60, 0, 0, 0);
-    // Set the alarm interrupt
-    RTC.alarmInterrupt(ALARM_1, true);
-
-//    // One time mode: the sensor reads and goes into sleep mode autonomously
-//    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
-//
-//    // Wait for the sensor to be fully awake.
-//    delay(500);
-
-    float lux = sample();
-    relayState = checkLightCond(lux);
-
-    digitalWrite(RELAY_SW_OUT, relayState);
-
-#ifdef DEBUG
-    printLuxArray();
-    Serial.print("= ");
-    Serial.print(lux);
-    Serial.print(" ");
-    if (relayState)
-      Serial.println("ON");
-    else Serial.println("OFF");
-#endif
+  if (setTimeMode) {
+    // ############################# SET TIME MODE ############################
+    Serial.println("Wake");
+    delay(500);
+    if (setTimeSerial()) {
+      // TODO set alarm
+      setTimeMode = false;
+    }
   } else {
-//    TODO set next alarm
-    makeTime(&utcTime, 2018, 11, 28, 20, 59, 54);
-    RTC.write(&utcTime);
+    //  TODO if (checkEnable(localTime)) {
+    if (checkEnable(utcTime)) {
+      RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + opt.poll) % 60, 0, 0, 0);
+      // Clear the alarm flag
+      RTC.alarm(ALARM_1);
+      // Set the alarm interrupt
+      RTC.alarmInterrupt(ALARM_1, true);
 
-    // Reset the alarm interrupt
-    RTC.alarmInterrupt(ALARM_1, false);
+      //    // One time mode: the sensor reads and goes into sleep mode autonomously
+      //    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
+      //
+      //    // Wait for the sensor to be fully awake.
+      //    delay(500);
 
-    cleanLuxArray();
-    digitalWrite(RELAY_SW_OUT, false);
-    relayState = false;
-  }
+      float lux = sample();
+      relayState = checkLightCond(lux);
+
+      digitalWrite(RELAY_SW_OUT, relayState);
 
 #ifdef DEBUG
-  Serial.println("Sleeping...");
-  Serial.println();
-  delay(500);
+      printLuxArray();
+      Serial.print("= ");
+      Serial.print(lux);
+      Serial.print(" ");
+      if (relayState)
+        Serial.println("ON");
+      else Serial.println("OFF");
 #endif
-  systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
+    } else {
+      // Reset the alarm interrupt
+      RTC.alarmInterrupt(ALARM_1, false);
 
-  RTC.alarm(ALARM_1);                   // Necessary to reset the alarm flag on RTC!
-  RTC.alarm(ALARM_2);                   // Necessary to reset the alarm flag on RTC!
+      cleanLuxArray();
+      digitalWrite(RELAY_SW_OUT, false);
+      relayState = false;
+    }
+
+#ifdef DEBUG
+    Serial.println("Sleeping...");
+    Serial.println();
+    delay(100);
+#endif
+    systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
+
+    RTC.alarm(ALARM_1);                   // Necessary to reset the alarm flag on RTC!
+    RTC.alarm(ALARM_2);                   // Necessary to reset the alarm flag on RTC!
+  }
 }
