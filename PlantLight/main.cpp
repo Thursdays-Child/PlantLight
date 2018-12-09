@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b004
+ * VERSION 2.0b005
  */
 
 #include <avr/sleep.h>
@@ -36,13 +36,15 @@
 
 // Pins
 #define RTC_INT_SQW             2       // INT/SQW pin from RTC: external interrupt
-#define RELAY_SW_OUT            5       // Relay output pin
 #define SET_TIME_IN             4       // Set time mode input pin: pin change interrupt
-// TODO time mode LED
+#define RELAY_SW_OUT            5       // Relay output pin
+#define TIME_MODE_LED           7       // Time mode LED
 
 #define ENABLE_H               16       // Enable hour (default)
 #define DISABLE_H              23       // Disable hour (default)
 #define ENA_DIS_MIN             0       // Enable and disable minute (default)
+
+#define TIME_MODE_TIMEOUT      30       // Set time mode timeout (default)  [s]
 
 #define POLLING_INT             3       // Polling interval (default)       [s]
 #define SAMPLE_COUNT           10       // Light sample count (average measurement)
@@ -50,21 +52,19 @@
 #define LUX_TH                 10       // Lux threshold
 #define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
 
-//#define RTC_CONTROL 0x0E                // TODO remove
-//#define RTC_STATUS 0x0F
-
 // ################################# Constants ################################
 
 // ################################# Variables ################################
 
 TwoWire bus;                            // TinyWireM instance (I2C bus)
-//BH1750FVI BH1750(bus);                  // Light sensor instance
+BH1750FVI BH1750(bus);                  // Light sensor instance
 DS3232RTC RTC(bus);                     // RTC clock instance
 
 static float luxSamples[MAX_SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
 static boolean relayState = false;
 volatile boolean setTimeMode = false;
+unsigned long timeModeMills = 0;
 static struct tm utcTime, localTime;
 
 //CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
@@ -102,9 +102,7 @@ float sample() {
     tmpLux += luxSamples[i];
   }
 
-  //luxSamples[opt.sampleCount - 1] = BH1750.getLightIntensity();  // TODO Get lux value
-
-  luxSamples[opt.sampleCount - 1] = 9.0;
+  luxSamples[opt.sampleCount - 1] = BH1750.getLightIntensity();
 
   tmpLux += luxSamples[opt.sampleCount - 1];
 
@@ -190,13 +188,14 @@ void printLuxArray() {
  *  hour is 0-23, and
  *  minute and second are 0-59.
  *
- * Entering the final comma delimiter (after "second") will avoid a TODO
+ * Entering the final comma delimiter (after "second") will avoid a
  * one-second timeout and will allow the RTC to be set more accurately.
  *
  * No validity checking is done, invalid values or incomplete syntax
  * in the input will result in an incorrect RTC setting.
+ *
+ * TIME IS ALWAYS IN UTC FORMAT!
  */
-// TODO exit from serial (quit?)
 boolean setTimeSerial() {
   int16_t YYYY;                 // Year in 4 digit format
   int8_t MM, DD, hh, mm, ss;
@@ -307,24 +306,41 @@ void setup() {
 
   // Setup pins modes
   pinMode(RELAY_SW_OUT, OUTPUT);
+  pinMode(TIME_MODE_LED, OUTPUT);
   pinMode(RTC_INT_SQW, INPUT_PULLUP);
   pinMode(SET_TIME_IN, INPUT_PULLUP);
 
   // RTC connection check
   if ((retcode = RTC.checkCon()) != 0) {
-    Serial.print("RTC err: ");
+    Serial.print(F("RTC error: "));
     Serial.println(retcode);
 
     // Exit application code to infinite loop
     exit(retcode);
   }
 
+  // Light sensor connection check
+  if ((retcode = BH1750.checkCon()) != 0) {
+    Serial.print(F("BH1750 error: "));
+    Serial.println(retcode);
+
+    // Exit application code to infinite loop
+    exit(retcode);
+  }
+
+  // Light Sensor initialization
+  BH1750.powerOn();
+  BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
+  BH1750.setMtreg(200);                 // Set measurement time register to high value
+  delay(100);
+  BH1750.sleep();                       // Send light sensor to sleep
+
   // Default options load
-  opt.hhE         = 21;//ENABLE_H;
-  opt.mmE         = 0;//ENA_DIS_MIN;
-  opt.hhD         = 21;//DISABLE_H;
-  opt.mmD         = 1;//ENA_DIS_MIN;
-  opt.poll        = 20; // TODO POLLING_INT;
+  opt.hhE         = ENABLE_H;
+  opt.mmE         = ENA_DIS_MIN;
+  opt.hhD         = DISABLE_H;
+  opt.mmD         = ENA_DIS_MIN;
+  opt.poll        = POLLING_INT;
   opt.sampleCount = SAMPLE_COUNT;
   opt.luxTh       = LUX_TH;
   opt.luxThHys    = LUX_TH_HIST;
@@ -334,8 +350,6 @@ void setup() {
   }
 
   // Real time clock set: UTC time!
-  //makeTime(&utcTime, 2018, 11, 28, 12, 59, 55);
-  //RTC.write(&utcTime);
   RTC.read(&utcTime);
   TZ.toLocal(&utcTime, &localTime, &tcr);
 
@@ -350,13 +364,6 @@ void setup() {
   RTC.alarm(ALARM_2);
   // Set the alarm interrupt
   RTC.alarmInterrupt(ALARM_2, true);
-
-  // Light Sensor initialization
-//  BH1750.powerOn();
-//  BH1750.setMode(BH1750_CONTINUOUS_HIGH_RES_MODE_2);
-//  BH1750.setMtreg(200);                 // Set measurement time register to high value
-//  delay(100);
-//  BH1750.sleep();                       // Send light sensor to sleep
 
   // Power settings
   powerReduction();
@@ -379,51 +386,66 @@ void loop() {
   printTime(&localTime, tcr->abbrev);
 #endif
 
-  if (setTimeMode) {
-    // ############################# SET TIME MODE ############################
-    Serial.println("Wake");
+  if (checkEnable(localTime)) {
+    RTC.setAlarm(ALM1_MATCH_SECONDS, (localTime.tm_sec + opt.poll) % 60, 0, 0, 0);
+    // Clear the alarm flag
+    RTC.alarm(ALARM_1);
+    // Set the alarm interrupt
+    RTC.alarmInterrupt(ALARM_1, true);
+
+    // One time mode: the sensor reads and goes into sleep mode autonomously
+    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
+
+    // Wait for the sensor to be fully awake.
     delay(500);
-    if (setTimeSerial()) {
-      // TODO set alarm
-      setTimeMode = false;
-    }
-  } else {
-    //  TODO if (checkEnable(localTime)) {
-    if (checkEnable(utcTime)) {
-      RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + opt.poll) % 60, 0, 0, 0);
-      // Clear the alarm flag
-      RTC.alarm(ALARM_1);
-      // Set the alarm interrupt
-      RTC.alarmInterrupt(ALARM_1, true);
 
-      //    // One time mode: the sensor reads and goes into sleep mode autonomously
-      //    BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
-      //
-      //    // Wait for the sensor to be fully awake.
-      //    delay(500);
-
-      float lux = sample();
-      relayState = checkLightCond(lux);
-
-      digitalWrite(RELAY_SW_OUT, relayState);
+    float lux = sample();
+    relayState = checkLightCond(lux);
 
 #ifdef DEBUG
-      printLuxArray();
-      Serial.print("= ");
-      Serial.print(lux);
-      Serial.print(" ");
-      if (relayState)
-        Serial.println("ON");
-      else Serial.println("OFF");
+    printLuxArray();
+    Serial.print(F("= "));
+    Serial.print(lux);
+    Serial.print(F(" "));
+    if (relayState)
+      Serial.println(F("ON"));
+    else Serial.println(F("OFF"));
 #endif
-    } else {
-      // Reset the alarm interrupt
-      RTC.alarmInterrupt(ALARM_1, false);
+  } else {
+    // Reset the alarm interrupt
+    RTC.alarmInterrupt(ALARM_1, false);
 
-      cleanLuxArray();
-      digitalWrite(RELAY_SW_OUT, false);
-      relayState = false;
+    cleanLuxArray();
+    relayState = false;
+  }
+
+  digitalWrite(RELAY_SW_OUT, relayState);
+
+  if (setTimeMode) {
+    // ############################# SET TIME MODE ############################
+    printTime(&utcTime, "UTC");
+    printTime(&localTime, tcr->abbrev);
+    delay(300);
+    if (setTimeSerial()) {
+      // Set alarm to the RTC clock in UTC format!!
+      RTC.setAlarm(ALM2_MATCH_HOURS, opt.mmE, opt.hhE, 0);
+      // Clear the alarm flag
+      RTC.alarm(ALARM_2);
+      // Set the alarm interrupt
+      RTC.alarmInterrupt(ALARM_2, true);
+
+      setTimeMode = false;
     }
+
+    // Timeout
+    if ((millis() - timeModeMills) >= TIME_MODE_TIMEOUT * 1000) {
+      setTimeMode = false;
+    }
+    digitalWrite(TIME_MODE_LED, HIGH);
+
+  } else {
+    timeModeMills = millis();
+    digitalWrite(TIME_MODE_LED, LOW);
 
 #ifdef DEBUG
     Serial.println("Sleeping...");

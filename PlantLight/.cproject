@@ -301,7 +301,6 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
@@ -371,5 +370,8 @@
 		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864;de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717.2124279864.;de.innot.avreclipse.tool.cppcompiler.app.debug.1023904161;de.innot.avreclipse.cppcompiler.input.483328847">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
+		<buildTargets/>
 	</storageModule>
 </cproject>

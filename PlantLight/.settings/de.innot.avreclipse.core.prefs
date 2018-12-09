@@ -59,7 +59,7 @@ avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410
 avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717/avrdude/OtherOptions=
 avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717/avrdude/ProgrammerID=programmerconfig.4
 avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717/avrdude/UseCounter=false
-avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717/avrdude/WriteEEPROM=true
+avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717/avrdude/WriteEEPROM=false
 avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.1442786717/avrdude/WriteFlash=true
 avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.2008053798/ClockFrequency=1000000
 avrtarget/de.innot.avreclipse.configuration.app.debug.381805049.216597436.543410479.2008053798/ExtRAMSize=0
