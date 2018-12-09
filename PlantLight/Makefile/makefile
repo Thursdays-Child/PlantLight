@@ -1,11 +1,12 @@
 CXX=avr-g++
 
-CORE_DIR=../../../../Core/ATTinyCore/
+CORE_DIR=../../../../Core/ATMegaCore/
 PROJECT_DIR=..
-TINYWIRE_DIR=../../../../Libraries/I2C/TinyWireM/
-DS1307RTC_DIR=../../../../Libraries/Sensors/BH1750FVI/
-BH1750FVI_DIR=../../../../Libraries/Time/DS1307RTC/
-LIB_DIR=Attiny85
+WIRE_DIR=../../../../Libraries/I2C/Wire/
+DS3232RTC_DIR=../../../../Libraries/Time/DS3232RTC/
+TIMEZONE_DIR=../../../../Libraries/Time/TimeZone/
+BH1750FVI_DIR=../../../../Libraries/Sensors/BH1750FVI/
+LIB_DIR=ATMega328P_1Mhz
 
 # avr tools path
 AVR_OBJCOPY=/usr/bin/avr-objcopy
@@ -16,17 +17,17 @@ AVRDUDE=/usr/bin/avrdude
 #DEBUG=-DDEBUG
 
 # CPU type and speed
-MCU=attiny85
+MCU=atmega328
 CPU_SPEED=1000000UL
 
 
-# Include (dependencies: Attiny core, DS1307 RTC clock , BH1750FVI light sensor, TINYWIRE I2C bus)
-INCLUDE=-I$(CORE_DIR) -I$(DS1307RTC_DIR) -I$(TINYWIRE_DIR) -I$(BH1750FVI_DIR)
+# Include (dependencies: ATMega core, DS3232 RTC clock , TIMEZONE,  BH1750FVI light sensor, WIRE I2C bus)
+INCLUDE=-I$(CORE_DIR) -I$(DS3232RTC_DIR) -I$(TIMEZONE_DIR) -I$(WIRE_DIR) -I$(BH1750FVI_DIR)
 
-# Libraries (dependencies: Attiny core, DS1307 RTC clock , BH1750FVI light sensor, TINYWIRE I2C bus)
-LIBS=-L$(CORE_DIR)/ATTiny85 -L$(TINYWIRE_DIR)/$(LIB_DIR)\
--L$(DS1307RTC_DIR)/$(LIB_DIR) -L$(BH1750FVI_DIR)/$(LIB_DIR)\
--lbh1750fvi -lds1307rtc -ltinywirem -lattinycore
+# Libraries (dependencies: ATMega core, DS3232 RTC clock , TIMEZONE, BH1750FVI light sensor, WIRE I2C bus)
+LIBS=-L$(CORE_DIR)/$(LIB_DIR) -L$(WIRE_DIR)/$(LIB_DIR)\
+-L$(DS3232RTC_DIR)/$(LIB_DIR) -L$(TIMEZONE_DIR)/$(LIB_DIR) -L$(BH1750FVI_DIR)/$(LIB_DIR)\
+-lds3232rtc -lbh1750fvi -ltimezone -lwire -latmegacore
 
 # Source file and application name
 OBJ=main
@@ -62,7 +63,7 @@ $(TARGET).elf: $(OBJ).o
 	
 upload:
 	@echo 'Invoking: AVRDude'
-	$(AVRDUDE) -p$(MCU) -cusbasp -Uflash:w:$(TARGET).hex:a -Ueeprom:w:../eeprom_CET_CEST_rules.hex:a
+	$(AVRDUDE) -p$(MCU) -cstk500v2 -P/dev/ttyACM0 -Uflash:w:$(TARGET).hex:a
 	@echo 'Finished building: $@'
 	@echo ' '
 	
