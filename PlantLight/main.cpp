@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b005
+ * VERSION 2.0b006
  */
 
 #include <avr/sleep.h>
@@ -44,9 +44,10 @@
 #define DISABLE_H              23       // Disable hour (default)
 #define ENA_DIS_MIN             0       // Enable and disable minute (default)
 
+#define SET_TIME_MODE_WAIT      1       // Set time mode wait (default)     [s]
 #define TIME_MODE_TIMEOUT      30       // Set time mode timeout (default)  [s]
 
-#define POLLING_INT             3       // Polling interval (default)       [s]
+#define POLLING_INT            20       // Polling interval (default)       [s]
 #define SAMPLE_COUNT           10       // Light sample count (average measurement)
 #define MAX_SAMPLE_COUNT       50       // Max light sample count
 #define LUX_TH                 10       // Lux threshold
@@ -62,9 +63,9 @@ DS3232RTC RTC(bus);                     // RTC clock instance
 
 static float luxSamples[MAX_SAMPLE_COUNT] = {};
 static uint8_t readCounter = 0;
+static int timeOut = 0;
 static boolean relayState = false;
 volatile boolean setTimeMode = false;
-unsigned long timeModeMills = 0;
 static struct tm utcTime, localTime;
 
 //CET Time Zone (Rome, Berlin) -> UTC/GMT + 1
@@ -171,7 +172,7 @@ boolean checkEnable(const struct tm &now) {
 #ifdef DEBUG
 void printLuxArray() {
   for (int i = 0; i < opt.sampleCount; ++i) {
-    Serial.print(luxSamples[i]);
+    printDigits(luxSamples[i]);
     Serial.print(" ");
   }
 }
@@ -354,8 +355,10 @@ void setup() {
   TZ.toLocal(&utcTime, &localTime, &tcr);
 
 #ifdef DEBUG
+  Serial.println(F("STARTUP"));
   printTime(&utcTime, "UTC");
   printTime(&localTime, tcr->abbrev);
+  Serial.println();
 #endif
 
   // Set alarm to the RTC clock in UTC format!!
@@ -381,10 +384,10 @@ void loop() {
   RTC.read(&utcTime);
   TZ.toLocal(&utcTime, &localTime, &tcr);
 
-#ifdef DEBUG
-  printTime(&utcTime, "UTC");
-  printTime(&localTime, tcr->abbrev);
-#endif
+//#ifdef DEBUG
+//  printTime(&utcTime, "UTC");
+//  printTime(&localTime, tcr->abbrev);
+//#endif
 
   if (checkEnable(localTime)) {
     RTC.setAlarm(ALM1_MATCH_SECONDS, (localTime.tm_sec + opt.poll) % 60, 0, 0, 0);
@@ -403,6 +406,8 @@ void loop() {
     relayState = checkLightCond(lux);
 
 #ifdef DEBUG
+    printTime(&localTime, tcr->abbrev, false);
+    Serial.print(F("- "));
     printLuxArray();
     Serial.print(F("= "));
     Serial.print(lux);
@@ -423,9 +428,14 @@ void loop() {
 
   if (setTimeMode) {
     // ############################# SET TIME MODE ############################
-    printTime(&utcTime, "UTC");
-    printTime(&localTime, tcr->abbrev);
-    delay(300);
+      Serial.println(F("SET TIME MODE:"));
+      printTime(&utcTime, "UTC");
+      printTime(&localTime, tcr->abbrev);
+      Serial.println();
+
+    delay(SET_TIME_MODE_WAIT * 1000L);
+    timeOut++;
+
     if (setTimeSerial()) {
       // Set alarm to the RTC clock in UTC format!!
       RTC.setAlarm(ALM2_MATCH_HOURS, opt.mmE, opt.hhE, 0);
@@ -438,19 +448,19 @@ void loop() {
     }
 
     // Timeout
-    if ((millis() - timeModeMills) >= TIME_MODE_TIMEOUT * 1000) {
+    if (timeOut >= TIME_MODE_TIMEOUT) {
       setTimeMode = false;
     }
     digitalWrite(TIME_MODE_LED, HIGH);
 
   } else {
-    timeModeMills = millis();
+    timeOut = 0;
     digitalWrite(TIME_MODE_LED, LOW);
 
 #ifdef DEBUG
-    Serial.println("Sleeping...");
-    Serial.println();
-    delay(100);
+//    Serial.println("Sleeping...");
+//    Serial.println();
+    delay(100);                           // Necessary to "flush" the serial buffer!!!
 #endif
     systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
 
