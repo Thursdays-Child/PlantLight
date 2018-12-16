@@ -77,13 +77,9 @@ TimeChangeRule *tcr;                                            // Pointer to th
 // Options data
 typedef struct {
   int8_t hhE, mmE, hhD, mmD;        // Time of day to enable or disable light
-  uint8_t poll;                     // Polling interval when enabled       [s]
-  uint8_t sampleCount;              // Light sample count (average measurement)
-  uint8_t luxTh;                    // Lux threshold
-  uint8_t luxThHys;                 // Lux threshold (hysteresis compensation)
-} options;                          // Options structure
+} alarm;                            // Alarm structure
 
-options opt;                        // Global application options
+alarm alm;                          // Global alarm instance
 
 // ############################################################################
 // Sensor reading functions
@@ -98,16 +94,16 @@ float sample() {
   float tmpLux = 0.0;
 
   // Shift left values in sample array
-  for (int i = 0; i < opt.sampleCount - 1; ++i) {
+  for (int i = 0; i < SAMPLE_COUNT - 1; ++i) {
     luxSamples[i] = luxSamples[i + 1];
     tmpLux += luxSamples[i];
   }
 
-  luxSamples[opt.sampleCount - 1] = BH1750.getLightIntensity();
+  luxSamples[SAMPLE_COUNT - 1] = BH1750.getLightIntensity();
 
-  tmpLux += luxSamples[opt.sampleCount - 1];
+  tmpLux += luxSamples[SAMPLE_COUNT - 1];
 
-  if (readCounter < opt.sampleCount) {
+  if (readCounter < SAMPLE_COUNT) {
     readCounter++;
   }
 
@@ -119,7 +115,7 @@ float sample() {
  */
 void cleanLuxArray() {
   readCounter = 0;
-  for (int i = 0; i < opt.sampleCount; ++i) {
+  for (int i = 0; i < SAMPLE_COUNT; ++i) {
     luxSamples[i] = 0.0;
   }
 }
@@ -131,7 +127,7 @@ void cleanLuxArray() {
  */
 boolean checkLightCond(float lux) {
   int low = 0, high = 0;
-  for (int i = opt.sampleCount / 2 + 1 ; i < opt.sampleCount - 1; ++i) {
+  for (int i = SAMPLE_COUNT / 2 + 1 ; i < SAMPLE_COUNT - 1; ++i) {
     if (luxSamples[i] <= LUX_TH) {
       low++;
     } else {
@@ -139,7 +135,7 @@ boolean checkLightCond(float lux) {
     }
   }
 
-  if (readCounter >= opt.sampleCount / 2 + 1) {
+  if (readCounter >= SAMPLE_COUNT / 2 + 1) {
     // Turn light on
     if (high <= 2 && lux <= LUX_TH) {
       return true;
@@ -155,9 +151,13 @@ boolean checkLightCond(float lux) {
   return false;
 }
 
+/**
+ * Return whether or not the current time "now" is within the [enable:disable]
+ * hours in the day.
+ */
 boolean checkEnable(const struct tm &now) {
-  int minE = opt.hhE * 60 + opt.mmE;
-  int minD = opt.hhD * 60 + opt.mmD;
+  int minE = alm.hhE * 60 + alm.mmE;
+  int minD = alm.hhD * 60 + alm.mmD;
   int nowM = now.tm_hour * 60 + now.tm_min;
 
   if (minE == minD) {
@@ -171,7 +171,7 @@ boolean checkEnable(const struct tm &now) {
 
 #ifdef DEBUG
 void printLuxArray() {
-  for (int i = 0; i < opt.sampleCount; ++i) {
+  for (int i = 0; i < SAMPLE_COUNT; ++i) {
     printDigits(luxSamples[i]);
     Serial.print(" ");
   }
@@ -247,6 +247,51 @@ boolean setTimeSerial() {
 return false;
 }
 
+/*
+ * Calculates the enable and disable hour in alarm structure, given the
+ * local time.
+ */
+void calcAlarm(struct tm *local_tm, alarm *alm) {
+  int me = 0, md = 0;
+
+  //  Serial.print("hhE = ");
+  //  Serial.println(alm.hhE);
+  //  Serial.print("mmE = ");
+  //  Serial.println(alm.mmE);
+
+  // Minutes with offset from DST
+  me = (ENABLE_H * 60  + ENA_DIS_MIN - TZ.getLocalDSTOffset(local_tm) + 1440)  % 1440;
+  md = (DISABLE_H * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(local_tm) + 1440) % 1440;
+  alm->hhE = me / 60;
+  alm->mmE = me % 60;
+  alm->hhD = md / 60;
+  alm->mmD = md % 60;
+
+  //  Serial.println();
+  //
+  //  Serial.print("hhE = ");
+  //  Serial.println(alm.hhE);
+  //  Serial.print("mmE = ");
+  //  Serial.println(alm.mmE);
+  //  Serial.print("hhD = ");
+  //  Serial.println(alm.hhD);
+}
+
+/*
+ * Calculates the enable and disable hour and sets the RTC alarm ALM2_MATCH_HOURS.
+ * Local time must be updated before the call.
+ */
+void setWakeUpAlarm() {
+  // Calculates the enable and disable hour with DST offset
+  calcAlarm(&localTime, &alm);
+  // Set alarm to the RTC clock in UTC format!!
+  RTC.setAlarm(ALM2_MATCH_HOURS, alm.mmE, alm.hhE, 0);
+  // Clear the alarm flag
+  RTC.alarm(ALARM_2);
+  // Set the alarm interrupt
+  RTC.alarmInterrupt(ALARM_2, true);
+}
+
 // ############################################################################
 // AVR specific functions
 // ############################################################################
@@ -298,7 +343,6 @@ static void powerReduction() {
 
 void setup() {
   uint8_t retcode;
-  int me = 0, md = 0;
 
   Serial.begin(SERIAL_BAUD);
 
@@ -348,46 +392,8 @@ void setup() {
   Serial.println();
 #endif
 
-  // Default options load
-
-  //  Serial.print("hhE = ");
-  //  Serial.println(opt.hhE);
-  //  Serial.print("mmE = ");
-  //  Serial.println(opt.mmE);
-
-  // Minutes with offset from DST
-  me = (ENABLE_H  * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(&localTime) + 1440) % 1440;
-  md = (DISABLE_H * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(&localTime) + 1440) % 1440;
-
-  opt.hhE = me / 60;
-  opt.mmE = me % 60;
-
-  opt.hhD = md / 60;
-  opt.mmD = md % 60;
-
-  //  Serial.println();
-  //
-  //  Serial.print("hhE = ");
-  //  Serial.println(opt.hhE);
-  //  Serial.print("mmE = ");
-  //  Serial.println(opt.mmE);
-  //  Serial.print("hhD = ");
-  //  Serial.println(opt.hhD);
-  opt.poll        = POLLING_INT;
-  opt.sampleCount = SAMPLE_COUNT;
-  opt.luxTh       = LUX_TH;
-  opt.luxThHys    = LUX_TH_HIST;
-
-  if (opt.sampleCount > MAX_SAMPLE_COUNT) {
-    opt.sampleCount = MAX_SAMPLE_COUNT;
-  }
-
-  // Set alarm to the RTC clock in UTC format!!
-  RTC.setAlarm(ALM2_MATCH_HOURS, opt.mmE, opt.hhE, 0);
-  // Clear the alarm flag
-  RTC.alarm(ALARM_2);
-  // Set the alarm interrupt
-  RTC.alarmInterrupt(ALARM_2, true);
+  // Calculates the enable and disable hour and sets the RTC alarm ALARM_2
+  setWakeUpAlarm();
 
   // Power settings
   powerReduction();
@@ -412,7 +418,7 @@ void loop() {
 
   //if (checkEnable(localTime)) {
   if (checkEnable(utcTime)) {
-    RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + opt.poll) % 60, 0, 0, 0);
+    RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + POLLING_INT) % 60, 0, 0, 0);
     // Clear the alarm flag
     RTC.alarm(ALARM_1);
     // Set the alarm interrupt
@@ -459,12 +465,8 @@ void loop() {
     timeOut++;
 
     if (setTimeSerial()) {
-      // Set alarm to the RTC clock in UTC format!!
-      RTC.setAlarm(ALM2_MATCH_HOURS, opt.mmE, opt.hhE, 0);
-      // Clear the alarm flag
-      RTC.alarm(ALARM_2);
-      // Set the alarm interrupt
-      RTC.alarmInterrupt(ALARM_2, true);
+      // Calculates the enable and disable hour and sets the RTC alarm ALM2_MATCH_HOURS.
+      setWakeUpAlarm();
 
       setTimeMode = false;
     }
