@@ -298,6 +298,7 @@ static void powerReduction() {
 
 void setup() {
   uint8_t retcode;
+  int me = 0, md = 0;
 
   Serial.begin(SERIAL_BAUD);
 
@@ -336,20 +337,6 @@ void setup() {
   delay(100);
   BH1750.sleep();                       // Send light sensor to sleep
 
-  // Default options load
-  opt.hhE         = ENABLE_H;
-  opt.mmE         = ENA_DIS_MIN;
-  opt.hhD         = DISABLE_H;
-  opt.mmD         = ENA_DIS_MIN;
-  opt.poll        = POLLING_INT;
-  opt.sampleCount = SAMPLE_COUNT;
-  opt.luxTh       = LUX_TH;
-  opt.luxThHys    = LUX_TH_HIST;
-
-  if (opt.sampleCount > MAX_SAMPLE_COUNT) {
-    opt.sampleCount = MAX_SAMPLE_COUNT;
-  }
-
   // Real time clock set: UTC time!
   RTC.read(&utcTime);
   TZ.toLocal(&utcTime, &localTime, &tcr);
@@ -360,6 +347,40 @@ void setup() {
   printTime(&localTime, tcr->abbrev);
   Serial.println();
 #endif
+
+  // Default options load
+
+  //  Serial.print("hhE = ");
+  //  Serial.println(opt.hhE);
+  //  Serial.print("mmE = ");
+  //  Serial.println(opt.mmE);
+
+  // Minutes with offset from DST
+  me = (ENABLE_H  * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(&localTime) + 1440) % 1440;
+  md = (DISABLE_H * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(&localTime) + 1440) % 1440;
+
+  opt.hhE = me / 60;
+  opt.mmE = me % 60;
+
+  opt.hhD = md / 60;
+  opt.mmD = md % 60;
+
+  //  Serial.println();
+  //
+  //  Serial.print("hhE = ");
+  //  Serial.println(opt.hhE);
+  //  Serial.print("mmE = ");
+  //  Serial.println(opt.mmE);
+  //  Serial.print("hhD = ");
+  //  Serial.println(opt.hhD);
+  opt.poll        = POLLING_INT;
+  opt.sampleCount = SAMPLE_COUNT;
+  opt.luxTh       = LUX_TH;
+  opt.luxThHys    = LUX_TH_HIST;
+
+  if (opt.sampleCount > MAX_SAMPLE_COUNT) {
+    opt.sampleCount = MAX_SAMPLE_COUNT;
+  }
 
   // Set alarm to the RTC clock in UTC format!!
   RTC.setAlarm(ALM2_MATCH_HOURS, opt.mmE, opt.hhE, 0);
@@ -389,8 +410,9 @@ void loop() {
 //  printTime(&localTime, tcr->abbrev);
 //#endif
 
-  if (checkEnable(localTime)) {
-    RTC.setAlarm(ALM1_MATCH_SECONDS, (localTime.tm_sec + opt.poll) % 60, 0, 0, 0);
+  //if (checkEnable(localTime)) {
+  if (checkEnable(utcTime)) {
+    RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + opt.poll) % 60, 0, 0, 0);
     // Clear the alarm flag
     RTC.alarm(ALARM_1);
     // Set the alarm interrupt
@@ -428,10 +450,10 @@ void loop() {
 
   if (setTimeMode) {
     // ############################# SET TIME MODE ############################
-      Serial.println(F("SET TIME MODE:"));
-      printTime(&utcTime, "UTC");
-      printTime(&localTime, tcr->abbrev);
-      Serial.println();
+    Serial.println(F("SET TIME MODE:"));
+    printTime(&utcTime, "UTC");
+    printTime(&localTime, tcr->abbrev);
+    Serial.println();
 
     delay(SET_TIME_MODE_WAIT * 1000L);
     timeOut++;
