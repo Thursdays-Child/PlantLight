@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b006
+ * VERSION 2.0b007
  */
 
 #include <avr/sleep.h>
@@ -47,7 +47,7 @@
 #define SET_TIME_MODE_WAIT      1       // Set time mode wait (default)     [s]
 #define TIME_MODE_TIMEOUT      30       // Set time mode timeout (default)  [s]
 
-#define POLLING_INT            20       // Polling interval (default)       [s]
+#define POLLING_INT            30       // Polling interval (default)       [s]
 #define SAMPLE_COUNT           10       // Light sample count (average measurement)
 #define MAX_SAMPLE_COUNT       50       // Max light sample count
 #define LUX_TH                 10       // Lux threshold
@@ -260,7 +260,7 @@ void calcAlarm(struct tm *local_tm, alarm *alm) {
   //  Serial.println(alm.mmE);
 
   // Minutes with offset from DST
-  me = (ENABLE_H * 60  + ENA_DIS_MIN - TZ.getLocalDSTOffset(local_tm) + 1440)  % 1440;
+  me = (ENABLE_H  * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(local_tm) + 1440) % 1440;
   md = (DISABLE_H * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(local_tm) + 1440) % 1440;
   alm->hhE = me / 60;
   alm->mmE = me % 60;
@@ -413,10 +413,8 @@ void loop() {
 
 //#ifdef DEBUG
 //  printTime(&utcTime, "UTC");
-//  printTime(&localTime, tcr->abbrev);
 //#endif
 
-  //if (checkEnable(localTime)) {
   if (checkEnable(utcTime)) {
     RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + POLLING_INT) % 60, 0, 0, 0);
     // Clear the alarm flag
@@ -445,6 +443,11 @@ void loop() {
     else Serial.println(F("OFF"));
 #endif
   } else {
+
+#ifdef DEBUG
+    printTime(&localTime, tcr->abbrev);
+#endif
+
     // Reset the alarm interrupt
     RTC.alarmInterrupt(ALARM_1, false);
 
@@ -481,11 +484,11 @@ void loop() {
     timeOut = 0;
     digitalWrite(TIME_MODE_LED, LOW);
 
-#ifdef DEBUG
+//#ifdef DEBUG
 //    Serial.println("Sleeping...");
 //    Serial.println();
+//#endif
     delay(100);                           // Necessary to "flush" the serial buffer!!!
-#endif
     systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
 
     RTC.alarm(ALARM_1);                   // Necessary to reset the alarm flag on RTC!
