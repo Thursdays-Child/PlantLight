@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b007
+ * VERSION 2.0b008
  */
 
 #include <avr/sleep.h>
@@ -36,7 +36,7 @@
 
 // Pins
 #define RTC_INT_SQW             2       // INT/SQW pin from RTC: external interrupt
-#define SET_TIME_IN             4       // Set time mode input pin: pin change interrupt
+#define TIME_MODE_SET           4       // Set time mode input pin: pin change interrupt
 #define RELAY_SW_OUT            5       // Relay output pin
 #define TIME_MODE_LED           7       // Time mode LED
 
@@ -197,10 +197,9 @@ void printLuxArray() {
  *
  * TIME IS ALWAYS IN UTC FORMAT!
  */
-boolean setTimeSerial() {
+boolean setTimeSerial(struct tm *utcTime, struct tm *localTime) {
   int16_t YYYY;                 // Year in 4 digit format
   int8_t MM, DD, hh, mm, ss;
-  time_t t;
 
   // Check for input to set the RTC, minimum length is 12, i.e. yy,m,d,h,m,s
   if (Serial.available() >= 12) {
@@ -221,21 +220,17 @@ boolean setTimeSerial() {
       mm = Serial.parseInt();
       ss = Serial.parseInt();
 
-      t = makeTime(YYYY, MM, DD, hh, mm, ss);
-
-      // Use the time_t value to ensure correct weekday is set
-      RTC.set(t);
-
       // Set UTC application time
-      memset((void*) &utcTime, 0, sizeof(utcTime));
-      gmtime_r(&t, &utcTime);
+      // Use this version of makeTime() to ensure correct weekday is set
+      makeTime(utcTime, YYYY, MM, DD, hh, mm, ss);
+      RTC.write(utcTime);
 
       // Convert UTC time in local time
-      TZ.toLocal(&utcTime, &localTime, &tcr);
+      TZ.toLocal(utcTime, localTime, &tcr);
 
       Serial.println(F("RTC set to: "));
-      printTime(&utcTime, "UTC");
-      printTime(&localTime, tcr->abbrev);
+      printTime(utcTime, "UTC");
+      printTime(localTime, tcr->abbrev);
       Serial.println();
 
       // Dump any extraneous input
@@ -248,44 +243,22 @@ return false;
 }
 
 /*
- * Calculates the enable and disable hour in alarm structure, given the
- * local time.
+ * Calculates the enable and disable hour and sets the RTC alarm ALM2_MATCH_HOURS.
+ * Local time must be updated before the call.
  */
-void calcAlarm(struct tm *local_tm, alarm *alm) {
+void setWakeUpAlarm(struct tm *localTime, alarm *alm) {
   int me = 0, md = 0;
 
-  //  Serial.print("hhE = ");
-  //  Serial.println(alm.hhE);
-  //  Serial.print("mmE = ");
-  //  Serial.println(alm.mmE);
-
-  // Minutes with offset from DST
-  me = (ENABLE_H  * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(local_tm) + 1440) % 1440;
-  md = (DISABLE_H * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(local_tm) + 1440) % 1440;
+  // Calculates the enable and disable hour with DST offset in minutes
+  me = (ENABLE_H  * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(localTime) + 1440) % 1440;
+  md = (DISABLE_H * 60 + ENA_DIS_MIN - TZ.getLocalDSTOffset(localTime) + 1440) % 1440;
   alm->hhE = me / 60;
   alm->mmE = me % 60;
   alm->hhD = md / 60;
   alm->mmD = md % 60;
 
-  //  Serial.println();
-  //
-  //  Serial.print("hhE = ");
-  //  Serial.println(alm.hhE);
-  //  Serial.print("mmE = ");
-  //  Serial.println(alm.mmE);
-  //  Serial.print("hhD = ");
-  //  Serial.println(alm.hhD);
-}
-
-/*
- * Calculates the enable and disable hour and sets the RTC alarm ALM2_MATCH_HOURS.
- * Local time must be updated before the call.
- */
-void setWakeUpAlarm() {
-  // Calculates the enable and disable hour with DST offset
-  calcAlarm(&localTime, &alm);
   // Set alarm to the RTC clock in UTC format!!
-  RTC.setAlarm(ALM2_MATCH_HOURS, alm.mmE, alm.hhE, 0);
+  RTC.setAlarm(ALM2_MATCH_HOURS, alm->mmE, alm->hhE, 0);
   // Clear the alarm flag
   RTC.alarm(ALARM_2);
   // Set the alarm interrupt
@@ -354,7 +327,7 @@ void setup() {
   pinMode(RELAY_SW_OUT, OUTPUT);
   pinMode(TIME_MODE_LED, OUTPUT);
   pinMode(RTC_INT_SQW, INPUT_PULLUP);
-  pinMode(SET_TIME_IN, INPUT_PULLUP);
+  pinMode(TIME_MODE_SET, INPUT_PULLUP);
 
   // RTC connection check
   if ((retcode = RTC.checkCon()) != 0) {
@@ -393,13 +366,13 @@ void setup() {
 #endif
 
   // Calculates the enable and disable hour and sets the RTC alarm ALARM_2
-  setWakeUpAlarm();
+  setWakeUpAlarm(&localTime, &alm);
 
   // Power settings
   powerReduction();
 
   // Interrupt configuration
-  PCMSK2 |= _BV(PCINT20);               // Pin change mask: listen to portD bit 4 (D4) (SET_TIME_IN)
+  PCMSK2 |= _BV(PCINT20);               // Pin change mask: listen to portD bit 4 (D4) (TIME_MODE_SET)
   PCICR  |= _BV(PCIE2);                 // Enable PCINT interrupt on portD
 
   EICRA |= _BV(ISC01);                  // Set INT0 to trigger on falling edge (RTC_INT_SQW)
@@ -410,10 +383,6 @@ void loop() {
 
   RTC.read(&utcTime);
   TZ.toLocal(&utcTime, &localTime, &tcr);
-
-//#ifdef DEBUG
-//  printTime(&utcTime, "UTC");
-//#endif
 
   if (checkEnable(utcTime)) {
     RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + POLLING_INT) % 60, 0, 0, 0);
@@ -467,9 +436,9 @@ void loop() {
     delay(SET_TIME_MODE_WAIT * 1000L);
     timeOut++;
 
-    if (setTimeSerial()) {
+    if (setTimeSerial(&utcTime, &localTime)) {
       // Calculates the enable and disable hour and sets the RTC alarm ALM2_MATCH_HOURS.
-      setWakeUpAlarm();
+      setWakeUpAlarm(&localTime, &alm);
 
       setTimeMode = false;
     }
@@ -484,10 +453,6 @@ void loop() {
     timeOut = 0;
     digitalWrite(TIME_MODE_LED, LOW);
 
-//#ifdef DEBUG
-//    Serial.println("Sleeping...");
-//    Serial.println();
-//#endif
     delay(100);                           // Necessary to "flush" the serial buffer!!!
     systemSleep(SLEEP_MODE_PWR_DOWN);     // Send the unit to sleep
 
