@@ -40,8 +40,8 @@
 #define RELAY_SW_OUT            5       // Relay output pin
 #define TIME_MODE_LED           7       // Time mode LED
 
-#define ENABLE_H               16       // Enable hour (default)
-#define DISABLE_H              23       // Disable hour (default)
+#define ENABLE_H               16       // Enable hour, UTC format (default)
+#define DISABLE_H              23       // Disable hour, UTC format (default)
 #define ENA_DIS_MIN             0       // Enable and disable minute (default)
 
 #define SET_TIME_MODE_WAIT      1       // Set time mode wait (default)     [s]
@@ -79,7 +79,7 @@ typedef struct {
   int8_t hhE, mmE, hhD, mmD;        // Time of day to enable or disable light
 } alarm;                            // Alarm structure
 
-alarm alm;                          // Global alarm instance
+alarm alm;                          // Global alarm instance: UTC format!
 
 // ############################################################################
 // Sensor reading functions
@@ -152,13 +152,15 @@ boolean checkLightCond(float lux) {
 }
 
 /**
- * Return whether or not the current time "now" is within the [enable:disable]
+ * Return whether or not the current time "utcTime" is within the [enable:disable]
  * hours in the day.
+ *
+ * ALL TIMES ARE IN UTC FORMAT!
  */
-boolean checkEnable(const struct tm &now) {
+boolean checkEnable(const struct tm &utcTime, const alarm &alm) {
   int minE = alm.hhE * 60 + alm.mmE;
   int minD = alm.hhD * 60 + alm.mmD;
-  int nowM = now.tm_hour * 60 + now.tm_min;
+  int nowM = utcTime.tm_hour * 60 + utcTime.tm_min;
 
   if (minE == minD) {
     return true;
@@ -195,7 +197,7 @@ void printLuxArray() {
  * No validity checking is done, invalid values or incomplete syntax
  * in the input will result in an incorrect RTC setting.
  *
- * TIME IS ALWAYS IN UTC FORMAT!
+ * ALL TIMES ARE IN UTC FORMAT, EXCEPT localTime!
  */
 boolean setTimeSerial(struct tm *utcTime, struct tm *localTime) {
   int16_t YYYY;                 // Year in 4 digit format
@@ -384,7 +386,7 @@ void loop() {
   RTC.read(&utcTime);
   TZ.toLocal(&utcTime, &localTime, &tcr);
 
-  if (checkEnable(utcTime)) {
+  if (checkEnable(utcTime, alm)) {
     RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + POLLING_INT) % 60, 0, 0, 0);
     // Clear the alarm flag
     RTC.alarm(ALARM_1);
