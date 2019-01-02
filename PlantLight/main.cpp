@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b008
+ * VERSION 2.0b009
  */
 
 #include <avr/sleep.h>
@@ -40,12 +40,12 @@
 #define RELAY_SW_OUT            5       // Relay output pin
 #define TIME_MODE_LED           7       // Time mode LED
 
-#define ENABLE_H               16       // Enable hour, UTC format (default)
-#define DISABLE_H              23       // Disable hour, UTC format (default)
+#define ENABLE_H               16       // Enable hour (default)
+#define DISABLE_H              23       // Disable hour (default)
 #define ENA_DIS_MIN             0       // Enable and disable minute (default)
 
 #define SET_TIME_MODE_WAIT      1       // Set time mode wait (default)     [s]
-#define TIME_MODE_TIMEOUT      30       // Set time mode timeout (default)  [s]
+#define TIME_MODE_TIMEOUT      60       // Set time mode timeout (default)  [s]
 
 #define POLLING_INT            30       // Polling interval (default)       [s]
 #define SAMPLE_COUNT           10       // Light sample count (average measurement)
@@ -416,7 +416,10 @@ void loop() {
   } else {
 
 #ifdef DEBUG
-    printTime(&localTime, tcr->abbrev);
+    if (!setTimeMode) {
+      printTime(&localTime, tcr->abbrev, false);
+      Serial.println(F("- DISABLED"));
+    }
 #endif
 
     // Reset the alarm interrupt
@@ -430,7 +433,9 @@ void loop() {
 
   if (setTimeMode) {
     // ############################# SET TIME MODE ############################
-    Serial.println(F("SET TIME MODE:"));
+    Serial.print(F("\nSET TIME MODE: "));
+    Serial.print(TIME_MODE_TIMEOUT - timeOut);
+    Serial.println(F(" s left"));
     printTime(&utcTime, "UTC");
     printTime(&localTime, tcr->abbrev);
     Serial.println();
@@ -441,8 +446,9 @@ void loop() {
     if (setTimeSerial(&utcTime, &localTime)) {
       // Calculates the enable and disable hour and sets the RTC alarm ALM2_MATCH_HOURS.
       setWakeUpAlarm(&localTime, &alm);
-
       setTimeMode = false;
+
+      RTC.alarm(ALARM_1);                 // Necessary to reset the alarm flag on RTC!
     }
 
     // Timeout
