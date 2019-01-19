@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.7.0">
+<eagle version="9.2.2">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
+<setting keepoldvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
 <grid distance="0.01" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.001" altunitdist="inch" altunit="inch"/>
@@ -2055,10 +2056,14 @@ design rules under a new name.</description>
 <param name="slThermalsForVias" value="0"/>
 <param name="dpMaxLengthDifference" value="10mm"/>
 <param name="dpGapFactor" value="2.5"/>
-<param name="checkGrid" value="0"/>
 <param name="checkAngle" value="0"/>
 <param name="checkFont" value="1"/>
 <param name="checkRestrict" value="0"/>
+<param name="checkStop" value="0"/>
+<param name="checkValues" value="0"/>
+<param name="checkNames" value="1"/>
+<param name="checkWireStubs" value="1"/>
+<param name="checkPolygonWidth" value="0"/>
 <param name="useDiameter" value="13"/>
 <param name="maxErrors" value="50"/>
 </designrules>
@@ -2159,46 +2164,102 @@ design rules under a new name.</description>
 </pass>
 </autorouter>
 <elements>
-<element name="D1" library="SparkFun" package="DIODE-1N4148" value="1N4148" x="6.588" y="22.218"/>
-<element name="T1" library="transistor-neu-to92" package="TO92-EBC" value="2N3904" x="9.748" y="47.444"/>
-<element name="R1" library="rcl" package="0207/10" value="1K" x="35.028" y="27.726" rot="R180"/>
-<element name="R2" library="rcl" package="0309/12" value="10K" x="36.346" y="31.964" rot="R180"/>
-<element name="PP" library="con-wago-500" package="W237-102" value="0" x="8.382" y="5.588">
-<attribute name="OC_FARNELL" value="unknown" x="8.382" y="5.588" size="1.778" layer="27" display="off"/>
-<attribute name="OC_NEWARK" value="70K9898" x="8.382" y="5.588" size="1.778" layer="27" display="off"/>
+<element name="D1" library="SparkFun" package="DIODE-1N4148" value="1N4148" x="6.588" y="22.218" smashed="yes">
+<attribute name="NAME" x="4.048" y="23.488" size="0.4064" layer="25"/>
+<attribute name="VALUE" x="4.556" y="21.71" size="0.8128" layer="21"/>
+</element>
+<element name="T1" library="transistor-neu-to92" package="TO92-EBC" value="2N3904" x="9.748" y="47.444" smashed="yes">
+<attribute name="NAME" x="7.208" y="49.222" size="1.27" layer="25" ratio="10"/>
+<attribute name="VALUE" x="7.208" y="42.872" size="1.27" layer="27" ratio="10"/>
+</element>
+<element name="R1" library="rcl" package="0207/10" value="1K" x="35.028" y="27.726" smashed="yes" rot="R180">
+<attribute name="NAME" x="38.076" y="26.202" size="1.27" layer="25" ratio="10" rot="R180"/>
+<attribute name="VALUE" x="37.2886" y="28.361" size="1.27" layer="27" ratio="10" rot="R180"/>
+</element>
+<element name="R2" library="rcl" package="0309/12" value="10K" x="36.346" y="31.964" smashed="yes" rot="R180">
+<attribute name="NAME" x="40.537" y="30.059" size="1.27" layer="25" ratio="10" rot="R180"/>
+<attribute name="VALUE" x="39.521" y="32.6498" size="1.27" layer="27" ratio="10" rot="R180"/>
+</element>
+<element name="PP" library="con-wago-500" package="W237-102" value="0" x="8.382" y="5.588" smashed="yes">
 <attribute name="MF" value="" x="8.382" y="5.588" size="1.778" layer="27" display="off"/>
 <attribute name="MPN" value="237-102" x="8.382" y="5.588" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="4.5358" y="0.5842" size="1.27" layer="25" ratio="10"/>
+<attribute name="OC_FARNELL" value="unknown" x="8.382" y="5.588" size="1.778" layer="27" display="off"/>
+<attribute name="OC_NEWARK" value="70K9898" x="8.382" y="5.588" size="1.778" layer="27" display="off"/>
+<attribute name="VALUE" x="3.342" y="-2.032" size="1.27" layer="27" ratio="10"/>
 </element>
-<element name="RE1" library="CuSTOM_GB" package="SRSZ-SL" value="SRSZ-SL5VDC" x="9.144" y="15.748"/>
-<element name="IC1" library="v-reg" package="78XXL" value="5V" x="15.24" y="28.772" rot="R90"/>
-<element name="C2" library="adafruit" package="C050-024X044" value="0.33uF" x="4.28" y="35.952"/>
-<element name="X1" library="con-phoenix-254" package="2POL254" value="" x="2.54" y="46.218" rot="R90">
-<attribute name="OC_NEWARK" value="unknown" x="2.54" y="46.218" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="MPN" value="" x="2.54" y="46.218" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="OC_FARNELL" value="unknown" x="2.54" y="46.218" size="1.778" layer="27" rot="R90" display="off"/>
+<element name="RE1" library="CuSTOM_GB" package="SRSZ-SL" value="SRSZ-SL5VDC" x="9.144" y="15.748" smashed="yes">
+<attribute name="NAME" x="1.524" y="22.4155" size="1.27" layer="25"/>
+<attribute name="VALUE" x="1.524" y="7.8105" size="1.27" layer="27"/>
+</element>
+<element name="IC1" library="v-reg" package="78XXL" value="5V" x="15.24" y="28.772" smashed="yes" rot="R90">
+<attribute name="NAME" x="10.16" y="24.962" size="1.778" layer="25" ratio="10" rot="R90"/>
+<attribute name="VALUE" x="12.7" y="24.835" size="1.778" layer="27" ratio="10" rot="R90"/>
+</element>
+<element name="C2" library="adafruit" package="C050-024X044" value="0.33uF" x="4.28" y="35.952" smashed="yes">
+<attribute name="NAME" x="2.121" y="37.349" size="1.27" layer="25" ratio="10"/>
+<attribute name="VALUE" x="2.121" y="33.285" size="1.27" layer="27" ratio="10"/>
+</element>
+<element name="X1" library="con-phoenix-254" package="2POL254" value="" x="2.54" y="46.218" smashed="yes" rot="R90">
 <attribute name="MF" value="" x="2.54" y="46.218" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="MPN" value="" x="2.54" y="46.218" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="NAME" x="0.762" y="43.424" size="1.27" layer="25" rot="R90"/>
+<attribute name="OC_FARNELL" value="unknown" x="2.54" y="46.218" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="OC_NEWARK" value="unknown" x="2.54" y="46.218" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="VALUE" x="5.588" y="43.424" size="1.27" layer="27" rot="R90"/>
 </element>
-<element name="C1" library="SparkFun-Capacitors" package="CPOL-RADIAL-10UF-25V" value="100uF" x="3.058" y="40.07" rot="R180"/>
-<element name="JP1" library="pinhead" package="1X06" value="" x="47.752" y="37.338" rot="R90"/>
-<element name="R4" library="rcl" package="R1206" value="18K" x="37.846" y="29.972" rot="MR180"/>
-<element name="R5" library="rcl" package="R1206" value="18K" x="33.274" y="42.418" rot="MR270"/>
-<element name="G2" library="CuSTOM_GB" package="CR2032_AMAZON" value="CR2032AMAZON" x="28.702" y="9.652"/>
-<element name="U3" library="Maxim_RTC" package="21-0042B_16" value="DS3231M+TRL" x="38.1" y="42.418" rot="R90">
+<element name="C1" library="SparkFun-Capacitors" package="CPOL-RADIAL-10UF-25V" value="100uF" x="3.058" y="40.07" smashed="yes" rot="R180">
+<attribute name="NAME" x="3.947" y="38.546" size="0.4064" layer="25" rot="R180"/>
+<attribute name="VALUE" x="4.963" y="43.753" size="0.8128" layer="27" rot="R180"/>
+</element>
+<element name="JP1" library="pinhead" package="1X06" value="" x="47.752" y="37.338" smashed="yes" rot="R90">
+<attribute name="NAME" x="45.9232" y="29.6418" size="1.27" layer="25" ratio="10" rot="R90"/>
+<attribute name="VALUE" x="50.927" y="29.718" size="1.27" layer="27" rot="R90"/>
+</element>
+<element name="R4" library="rcl" package="R1206" value="18K" x="37.846" y="29.972" smashed="yes" rot="MR180">
+<attribute name="NAME" x="36.576" y="28.702" size="1.27" layer="26" rot="MR180"/>
+<attribute name="VALUE" x="36.576" y="32.512" size="1.27" layer="28" rot="MR180"/>
+</element>
+<element name="R5" library="rcl" package="R1206" value="18K" x="33.274" y="42.418" smashed="yes" rot="MR270">
+<attribute name="NAME" x="32.004" y="43.688" size="1.27" layer="26" rot="MR270"/>
+<attribute name="VALUE" x="35.814" y="43.688" size="1.27" layer="28" rot="MR270"/>
+</element>
+<element name="G2" library="CuSTOM_GB" package="CR2032_AMAZON" value="CR2032AMAZON" x="28.702" y="9.652" smashed="yes">
+<attribute name="NAME" x="25.862" y="15.912" size="1.27" layer="21" ratio="10"/>
+<attribute name="VALUE" x="32.077" y="13.132" size="1.27" layer="21" ratio="10" rot="R180"/>
+</element>
+<element name="U3" library="Maxim_RTC" package="21-0042B_16" value="DS3231M+TRL" x="38.1" y="42.418" smashed="yes" rot="R90">
 <attribute name="MANUFACTURER_PART_NUMBER" value="DS3231M+TRL" x="-19.558" y="-36.068" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="NAME" x="38.735" y="39.1414" size="1.27" layer="25" ratio="6" rot="SR90"/>
 <attribute name="VENDOR" value="Maxim Integrated Products" x="-19.558" y="-36.068" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R3" library="rcl" package="R1206" value="18K" x="37.846" y="34.036" rot="MR180"/>
-<element name="R6" library="rcl" package="R1206" value="18K" x="26.924" y="34.036" rot="MR0"/>
-<element name="U4" library="IC" package="TQFP32" value="ATMEGA8/168/328" x="23.368" y="42.672" rot="MR90"/>
-<element name="R7" library="rcl" package="R1206" value="890" x="25.4" y="29.464" smashed="yes" rot="R90">
+<element name="R3" library="rcl" package="R1206" value="18K" x="37.846" y="34.036" smashed="yes" rot="MR180">
+<attribute name="NAME" x="36.576" y="32.766" size="1.27" layer="26" rot="MR180"/>
+<attribute name="VALUE" x="36.576" y="36.576" size="1.27" layer="28" rot="MR180"/>
+</element>
+<element name="R6" library="rcl" package="R1206" value="18K" x="26.924" y="34.036" smashed="yes" rot="MR0">
+<attribute name="NAME" x="28.194" y="35.306" size="1.27" layer="26" rot="MR0"/>
+<attribute name="VALUE" x="28.194" y="31.496" size="1.27" layer="28" rot="MR0"/>
+</element>
+<element name="U4" library="IC" package="TQFP32" value="ATMEGA8/168/328" x="23.368" y="42.672" smashed="yes" rot="MR90">
+<attribute name="NAME" x="28.448" y="40.513" size="0.8128" layer="26" rot="MR90"/>
+<attribute name="VALUE" x="23.114" y="40.386" size="0.8128" layer="28" rot="MR90"/>
+</element>
+<element name="R7" library="rcl" package="R1206" value="560" x="25.4" y="29.464" smashed="yes" rot="R90">
 <attribute name="NAME" x="26.924" y="33.274" size="1.27" layer="25" rot="R180"/>
 <attribute name="VALUE" x="27.94" y="28.194" size="1.27" layer="27" rot="R90"/>
 </element>
 <element name="TIME_MODE" library="adafruit" package="CHIPLED_1206" value="YELLOW" x="42.926" y="3.302" smashed="yes" rot="R270">
 <attribute name="VALUE" x="41.656" y="0.762" size="1.27" layer="27"/>
 </element>
-<element name="C4" library="rcl" package="C1206" value="0.1uF" x="15.24" y="44.704" rot="MR90"/>
-<element name="C5" library="rcl" package="C1206" value="0.1uF" x="15.24" y="37.084" rot="MR270"/>
+<element name="C4" library="rcl" package="C1206" value="0.1uF" x="15.24" y="44.704" smashed="yes" rot="MR90">
+<attribute name="NAME" x="16.51" y="43.434" size="1.27" layer="26" rot="MR90"/>
+<attribute name="VALUE" x="12.7" y="43.434" size="1.27" layer="28" rot="MR90"/>
+</element>
+<element name="C5" library="rcl" package="C1206" value="0.1uF" x="15.24" y="37.084" smashed="yes" rot="MR270">
+<attribute name="NAME" x="13.97" y="38.354" size="1.27" layer="26" rot="MR270"/>
+<attribute name="VALUE" x="17.78" y="38.354" size="1.27" layer="28" rot="MR270"/>
+</element>
 <element name="ICSP" library="SparkFun-Connectors" package="2X3" value="AVR_SPI_PROG" x="46.736" y="21.336" smashed="yes" rot="R90">
 <attribute name="NAME" x="46.482" y="28.448" size="0.6096" layer="25" font="vector" ratio="20" rot="R180"/>
 <attribute name="VALUE" x="49.149" y="20.066" size="0.6096" layer="27" font="vector" ratio="20" rot="R90"/>
@@ -2211,7 +2272,10 @@ design rules under a new name.</description>
 <element name="R8" library="rcl" package="R1206" value="18K" x="42.164" y="14.732" smashed="yes" rot="R270">
 <attribute name="VALUE" x="39.624" y="16.002" size="1.27" layer="27" rot="R270"/>
 </element>
-<element name="C3" library="adafruit" package="C050-024X044" value="0.1uF" x="30.226" y="42.418" rot="R270"/>
+<element name="C3" library="adafruit" package="C050-024X044" value="0.1uF" x="30.226" y="42.418" smashed="yes" rot="R270">
+<attribute name="NAME" x="31.623" y="44.577" size="1.27" layer="25" ratio="10" rot="R270"/>
+<attribute name="VALUE" x="27.559" y="44.577" size="1.27" layer="27" ratio="10" rot="R270"/>
+</element>
 </elements>
 <signals>
 <signal name="GND">
@@ -2751,146 +2815,15 @@ design rules under a new name.</description>
 <via x="31.75" y="36.98875" extent="1-16" drill="0.381"/>
 </signal>
 </signals>
+<mfgpreviewcolors>
+<mfgpreviewcolor name="soldermaskcolor" color="0xC8008000"/>
+<mfgpreviewcolor name="silkscreencolor" color="0xFFFEFEFE"/>
+<mfgpreviewcolor name="backgroundcolor" color="0xFF282828"/>
+<mfgpreviewcolor name="coppercolor" color="0xFFFFBF00"/>
+<mfgpreviewcolor name="substratecolor" color="0xFF786E46"/>
+</mfgpreviewcolors>
 <errors>
-<approved hash="8,16,5d2ba3a31494f288"/>
-<approved hash="8,16,88ec815cad568a46"/>
-<approved hash="8,16,bfee28d494490be4"/>
-<approved hash="8,16,c976391f8f058283"/>
-<approved hash="8,16,a2ced34f7a6ab8ee"/>
-<approved hash="8,16,b529d7ff35bd0c2a"/>
-<approved hash="8,16,907938722eeefb61"/>
-<approved hash="8,16,d6bac85a34a74e79"/>
-<approved hash="8,16,4321ae82811948ea"/>
-<approved hash="8,16,89fe69a14dd848b9"/>
-<approved hash="8,16,c584773d01b87a18"/>
-<approved hash="8,16,d95eb3314e5a9a18"/>
-<approved hash="8,16,04119e5ef9e4faec"/>
-<approved hash="8,16,fc3c2d7bef7e24bb"/>
-<approved hash="8,16,83e28a1aaa0c8500"/>
-<approved hash="8,16,1d714d9d59d0acdc"/>
-<approved hash="8,16,e7741e5bd443d117"/>
-<approved hash="8,16,c2a423a675ed4129"/>
-<approved hash="8,16,bf7e2d8090e10b6c"/>
-<approved hash="8,16,cefc3fc9859b87dd"/>
-<approved hash="8,16,66ec8b6d0e5e99eb"/>
-<approved hash="8,16,aaf40f490aadea86"/>
-<approved hash="8,16,856664f746c64a53"/>
-<approved hash="8,16,1f160a983391b1de"/>
-<approved hash="8,16,7646b2166eee36df"/>
-<approved hash="8,16,ea7c6623e7963a6d"/>
-<approved hash="8,16,d9f4514e438cd531"/>
-<approved hash="8,16,7b65eada036daf5f"/>
-<approved hash="8,16,da62be7546269b68"/>
-<approved hash="8,16,2f958cc8d818ef8b"/>
-<approved hash="8,16,1e160e0519222fa5"/>
-<approved hash="8,16,c7bec7fe2438a586"/>
-<approved hash="8,16,02e026398d0d758e"/>
-<approved hash="8,16,1b0c5b06f9898a8c"/>
-<approved hash="8,16,d6839f15e0b15613"/>
-<approved hash="8,16,316498d2f9663ca0"/>
-<approved hash="8,16,e70890887181f9c3"/>
-<approved hash="8,16,27ad49a30631653a"/>
-<approved hash="8,16,e7527ed66b99c401"/>
-<approved hash="8,16,c27ec3be2738a666"/>
-<approved hash="8,16,b7be240334bc86bb"/>
-<approved hash="8,16,61660f95463e9c50"/>
-<approved hash="8,16,e6e187b50d573e3c"/>
-<approved hash="8,16,f67777e37930c603"/>
-<approved hash="8,16,374cf85fc0157fb1"/>
-<approved hash="8,16,1e060e0518e22cb5"/>
-<approved hash="8,16,477599ed7784eee2"/>
-<approved hash="8,16,c0dfe974e93b0ff3"/>
-<approved hash="8,16,022227ef8e71764a"/>
-<approved hash="8,16,10c4574ef5d98ea4"/>
-<approved hash="8,16,3e48a49604a5c7ea"/>
-<approved hash="8,16,fe2f320c650b2e0c"/>
-<approved hash="8,16,1d4c5a86fc398d4c"/>
-<approved hash="8,16,14ba0a8996ed0a2a"/>
-<approved hash="8,16,13930108be8ea415"/>
-<approved hash="8,16,3044828f10984e82"/>
-<approved hash="8,16,0242266b8dd57502"/>
-<approved hash="8,16,ccd97b626d0e23d3"/>
-<approved hash="8,16,a53b87c9a30dd90e"/>
-<approved hash="8,16,408607a657ec379f"/>
-<approved hash="5,1,3631b2c22d0be901"/>
-<approved hash="5,1,ca07b2ca2d261512"/>
-<approved hash="5,1,d81906952932377e"/>
-<approved hash="5,1,1bfa3aaf28f5c960"/>
-<approved hash="5,16,7fdae4d27f4a7d49"/>
-<approved hash="5,16,7be2e4c27f4a7961"/>
-<approved hash="5,16,d3cff1b6bfc900c5"/>
-<approved hash="5,16,d31ff5debb310085"/>
-<approved hash="5,16,6c3ae4d27f4a6ea9"/>
-<approved hash="5,16,6842e4c27f4a6ac1"/>
-<approved hash="5,16,68c13bd73965feda"/>
-<approved hash="5,16,1741d9d559641f5a"/>
-<approved hash="5,16,646ae4f27f6a66f9"/>
-<approved hash="5,16,481b04679cfc87ba"/>
-<approved hash="5,16,6f381e97559908c7"/>
-<approved hash="5,16,d86ac485078522cd"/>
-<approved hash="5,16,827e74fd37bdc8a1"/>
-<approved hash="5,16,aa425cfd27bdd89d"/>
-<approved hash="5,16,f056ec85178532f1"/>
-<approved hash="5,16,88529485678542f5"/>
-<approved hash="5,16,d24624fd57bda899"/>
-<approved hash="5,16,fa4a0cfd27bdd895"/>
-<approved hash="5,16,a05ebc85178532f9"/>
-<approved hash="5,16,e24e14fd37bdc891"/>
-<approved hash="5,16,b85aa485078522fd"/>
-<approved hash="5,16,50474c85178532e0"/>
-<approved hash="5,16,0a53fcfd27bdd88c"/>
-<approved hash="5,16,68437485278502e4"/>
-<approved hash="5,16,3257c4fd17bde888"/>
-<approved hash="5,16,16f93f7bec9ffc09"/>
-<approved hash="5,16,1b0542405248f9aa"/>
-<approved hash="5,16,2a4990e1518ab849"/>
-<approved hash="5,16,1aaec8c3a7ad7255"/>
-<approved hash="5,16,1749747b5e04c277"/>
-<approved hash="5,16,1bc541c059b8fa4a"/>
-<approved hash="5,16,15d93cbbf48fff09"/>
-<approved hash="5,16,026b5575c4e8c0dd"/>
-<approved hash="5,16,78be95fad39c1f6c"/>
-<approved hash="5,16,06cff19f46631432"/>
-<approved hash="5,16,061ff5f7429b1472"/>
-<approved hash="5,16,065fed07596b1732"/>
-<approved hash="5,16,19bf8de07d15329e"/>
-<approved hash="5,16,0acfa3b31d5de3c9"/>
-<approved hash="5,16,8233b1d62aaa2481"/>
-<approved hash="5,16,84ecd037874a6aee"/>
-<approved hash="5,16,88c4d007876a66d6"/>
-<approved hash="5,16,06affa0f4d931432"/>
-<approved hash="5,16,91c5b133604c487d"/>
-<approved hash="5,16,5b2bac3565c86de6"/>
-<approved hash="5,16,ea9775c8df033677"/>
-<approved hash="5,16,9374d027874a7d66"/>
-<approved hash="5,16,259fd7f1856ad03d"/>
-<approved hash="5,16,39b7d7e1854acc25"/>
-<approved hash="5,16,2defd7f1854ad86d"/>
-<approved hash="5,16,2187d781852ad415"/>
-<approved hash="5,16,29d7d7e1854adc45"/>
-<approved hash="5,16,3d4fd7f1854ac8cd"/>
-<approved hash="5,16,3167d7c1856ac4f5"/>
-<approved hash="5,16,0451c68d2885ecf2"/>
-<approved hash="5,16,de454a8524bdbae6"/>
-<approved hash="5,16,1c5dde8d3885fcfe"/>
-<approved hash="5,16,c649528534bdaaea"/>
-<approved hash="5,16,7459b68d2885ecfa"/>
-<approved hash="5,16,ae4d3a8524bdbaee"/>
-<approved hash="5,16,4c458e8d1885dce6"/>
-<approved hash="5,16,9651028514bd8af2"/>
-<approved hash="5,16,7e56ea8524bdbaf5"/>
-<approved hash="5,16,a442668d2885ece1"/>
-<approved hash="5,16,665af28534bdaaf9"/>
-<approved hash="5,16,bc4e7e8d3885fced"/>
-<approved hash="5,16,4e5eda8524bdbafd"/>
-<approved hash="5,16,944a568d2885ece9"/>
-<approved hash="5,16,3d8dc351bd4adc9f"/>
-<approved hash="5,16,39b5c341bd4ad8b7"/>
-<approved hash="5,16,2dedc351bd4accff"/>
-<approved hash="5,16,2915c341bd4ac817"/>
-<approved hash="5,16,253dc371bd6ac42f"/>
-<approved hash="5,16,31c5c341bd6ad0e7"/>
-<approved hash="5,16,35ddc331bd2ad4cf"/>
+<approved hash="23,1,e1ffb981ff1f1ac0"/>
 </errors>
 </board>
 </drawing>
