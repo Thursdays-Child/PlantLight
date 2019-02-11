@@ -4,14 +4,10 @@
 	<comment></comment>
 	<projects>
 		<project>ATMegaCore</project>
-		<project>ATTinyCore</project>
 		<project>BH1750FVI</project>
-		<project>DS1307RTC</project>
 		<project>DS3232RTC</project>
 		<project>TimeZone</project>
-		<project>TinyWireM</project>
 		<project>Wire</project>
-		<project>AttinyCore</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

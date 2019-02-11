@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b009
+ * VERSION 2.0b010
  */
 
 #include <avr/sleep.h>
@@ -335,6 +335,7 @@ void setup() {
   if ((retcode = RTC.checkCon()) != 0) {
     Serial.print(F("RTC error: "));
     Serial.println(retcode);
+    delay(500);
 
     // Exit application code to infinite loop
     exit(retcode);
@@ -344,6 +345,7 @@ void setup() {
   if ((retcode = BH1750.checkCon()) != 0) {
     Serial.print(F("BH1750 error: "));
     Serial.println(retcode);
+    delay(500);
 
     // Exit application code to infinite loop
     exit(retcode);

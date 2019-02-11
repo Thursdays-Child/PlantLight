@@ -249,7 +249,7 @@
 								</option>
 								<option id="de.innot.avreclipse.cpplinker.option.libpath.46295825" name="Libraries Path (-L)" superClass="de.innot.avreclipse.cpplinker.option.libpath" useByScannerDiscovery="false" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DS3232RTC/ATMega328P_1Mhz}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ATMegaCore/ATMega328P_8Mhz}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ATMegaCore/ATMega328P_1Mhz}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BH1750FVI/ATMega328P_1Mhz}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TimeZone/ATMega328P_1Mhz}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Wire/ATMega328P_1Mhz}&quot;"/>
