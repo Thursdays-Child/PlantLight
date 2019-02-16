@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 2.0b010
+ * VERSION 2.0
  */
 
 #include <avr/sleep.h>

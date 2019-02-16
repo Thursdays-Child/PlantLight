@@ -8,6 +8,10 @@
 		<project>DS3232RTC</project>
 		<project>TimeZone</project>
 		<project>Wire</project>
+		<project>AttinyCore</project>
+		<project>TinyWireM</project>
+		<project>ATTinyCore</project>
+		<project>DS1307RTC</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
