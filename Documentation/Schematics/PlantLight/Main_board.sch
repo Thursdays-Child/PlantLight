@@ -13709,7 +13709,7 @@ SparkFun BigTime Watch Kit&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;
 </library>
 </libraries>
 <attributes>
-<attribute name="VERSION" value="2.0"/>
+<attribute name="VERSION" value="2.01"/>
 </attributes>
 <variantdefs>
 </variantdefs>
