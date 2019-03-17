@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.2.2">
+<eagle version="9.3.1">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -168,12 +168,12 @@
 <text x="44.804" y="35.76" size="0.6096" layer="21">SCL</text>
 <text x="45.212" y="33.274" size="0.6096" layer="21">RX</text>
 <text x="45.212" y="30.734" size="0.6096" layer="21">TX</text>
-<text x="49.16" y="20.32" size="0.6096" layer="21" rot="R90">MISO</text>
-<text x="49.16" y="23.114" size="0.6096" layer="21" rot="R90">SCK</text>
-<text x="49.16" y="25.246" size="0.6096" layer="21" rot="R90">RESET</text>
-<text x="42.302" y="23.114" size="0.6096" layer="21" rot="R90">MOSI</text>
-<text x="42.302" y="25.654" size="0.6096" layer="21" rot="R90">GND</text>
-<text x="42.302" y="20.574" size="0.6096" layer="21" rot="R90">VCC</text>
+<text x="49.16" y="19.304" size="0.6096" layer="21" rot="R90">MISO</text>
+<text x="49.16" y="22.098" size="0.6096" layer="21" rot="R90">SCK</text>
+<text x="49.16" y="24.23" size="0.6096" layer="21" rot="R90">RESET</text>
+<text x="42.556" y="22.098" size="0.6096" layer="21" rot="R90">MOSI</text>
+<text x="42.556" y="24.638" size="0.6096" layer="21" rot="R90">GND</text>
+<text x="42.556" y="19.558" size="0.6096" layer="21" rot="R90">VCC</text>
 <text x="36.068" y="28.194" size="1.016" layer="21" rot="R180">R1</text>
 <text x="35.56" y="31.496" size="1.016" layer="21">R2</text>
 <text x="36.83" y="36.068" size="1.016" layer="22" rot="MR180">R3</text>
