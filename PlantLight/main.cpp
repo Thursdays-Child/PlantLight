@@ -439,12 +439,12 @@ void loop() {
   }
 */
 
-  delay(2000);
   relayState = !relayState;
   Serial.print(F("Relay: "));
   Serial.println(relayState);
 
   digitalWrite(RELAY_SW_OUT, relayState);
+  delay(2000);
 
   /*
   if (setTimeMode) {
