@@ -341,10 +341,6 @@ void setup() {
     exit(retcode);
   }
 
-//  makeTime(&utcTime, 2020, 03, 29, 9, 31, 00);
-//  RTC.write(&utcTime);
-
-  /*
   // Light sensor connection check
   if ((retcode = BH1750.checkCon()) != 0) {
     Serial.print(F("BH1750 error: "));
@@ -361,7 +357,6 @@ void setup() {
   BH1750.setMtreg(200);                 // Set measurement time register to high value
   delay(100);
   BH1750.sleep();                       // Send light sensor to sleep
-  */
 
   // Real time clock set: UTC time!
   RTC.read(&utcTime);
@@ -392,9 +387,7 @@ void loop() {
 
   RTC.read(&utcTime);
   TZ.toLocal(&utcTime, &localTime, &tcr);
-  printTime(&localTime, tcr->abbrev, false);
 
-  /*
   if (checkEnable(utcTime, alm)) {
     RTC.setAlarm(ALM1_MATCH_SECONDS, (utcTime.tm_sec + POLLING_INT) % 60, 0, 0, 0);
     // Clear the alarm flag
@@ -437,22 +430,9 @@ void loop() {
     cleanLuxArray();
     relayState = false;
   }
-*/
-
-  relayState = !relayState;
-  Serial.print(F(", Relay: "));
-  Serial.print(relayState);
-
-  boolean time = digitalRead(TIME_MODE_SET);
-  Serial.print(F(", Time mode: "));
-  Serial.println(time);
 
   digitalWrite(RELAY_SW_OUT, relayState);
-  digitalWrite(TIME_MODE_LED, relayState);
 
-  delay(4000);
-
-  /*
   if (setTimeMode) {
     // ############################# SET TIME MODE ############################
     Serial.print(F("\nSET TIME MODE: "));
@@ -489,5 +469,4 @@ void loop() {
     RTC.alarm(ALARM_1);                   // Necessary to reset the alarm flag on RTC!
     RTC.alarm(ALARM_2);                   // Necessary to reset the alarm flag on RTC!
   }
-  */
 }

@@ -10596,10 +10596,10 @@ Created by Robert Siegler</description>
 <wire x1="-2.54" y1="1.016" x2="-2.54" y2="-1.016" width="0.1524" layer="21" curve="-180"/>
 <text x="4.191" y="-2.921" size="1.27" layer="27" ratio="10" rot="R90">&gt;VALUE</text>
 <text x="-2.921" y="-2.667" size="1.27" layer="25" ratio="10" rot="R90">&gt;NAME</text>
-<smd name="P$1" x="-1.27" y="3.81" dx="1.27" dy="2.54" layer="1"/>
-<smd name="P$2" x="1.27" y="3.81" dx="1.27" dy="2.54" layer="1"/>
-<smd name="P$3" x="-1.27" y="-3.81" dx="1.27" dy="2.54" layer="1"/>
-<smd name="P$4" x="1.27" y="-3.81" dx="1.27" dy="2.54" layer="1"/>
+<smd name="P$4" x="-1.27" y="3.81" dx="1.27" dy="2.54" layer="1"/>
+<smd name="P$3" x="1.27" y="3.81" dx="1.27" dy="2.54" layer="1"/>
+<smd name="P$1" x="-1.27" y="-3.81" dx="1.27" dy="2.54" layer="1"/>
+<smd name="P$2" x="1.27" y="-3.81" dx="1.27" dy="2.54" layer="1"/>
 </package>
 </packages>
 <symbols>
@@ -10815,8 +10815,8 @@ Type: &lt;b&gt;SPC4077 / SPC 4078&lt;/b&gt;&lt;p&gt;</description>
 <connects>
 <connect gate="A" pin="A" pad="P$1"/>
 <connect gate="A" pin="C" pad="P$2"/>
-<connect gate="A" pin="COL" pad="P$3"/>
-<connect gate="A" pin="EMIT" pad="P$4"/>
+<connect gate="A" pin="COL" pad="P$4"/>
+<connect gate="A" pin="EMIT" pad="P$3"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -13959,70 +13959,6 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 </deviceset>
 </devicesets>
 </library>
-<library name="jumper">
-<description>&lt;b&gt;Jumpers&lt;/b&gt;&lt;p&gt;
-&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
-<packages>
-<package name="JP1">
-<description>&lt;b&gt;JUMPER&lt;/b&gt;</description>
-<wire x1="-1.016" y1="0" x2="-1.27" y2="0.254" width="0.1524" layer="21"/>
-<wire x1="-1.016" y1="0" x2="-1.27" y2="-0.254" width="0.1524" layer="21"/>
-<wire x1="1.016" y1="0" x2="1.27" y2="0.254" width="0.1524" layer="21"/>
-<wire x1="1.016" y1="0" x2="1.27" y2="-0.254" width="0.1524" layer="21"/>
-<wire x1="1.27" y1="-0.254" x2="1.27" y2="-2.286" width="0.1524" layer="21"/>
-<wire x1="1.016" y1="-2.54" x2="1.27" y2="-2.286" width="0.1524" layer="21"/>
-<wire x1="1.27" y1="2.286" x2="1.016" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="1.27" y1="2.286" x2="1.27" y2="0.254" width="0.1524" layer="21"/>
-<wire x1="1.016" y1="2.54" x2="-1.016" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="-1.27" y1="2.286" x2="-1.016" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="-1.27" y1="2.286" x2="-1.27" y2="0.254" width="0.1524" layer="21"/>
-<wire x1="-1.27" y1="-0.254" x2="-1.27" y2="-2.286" width="0.1524" layer="21"/>
-<wire x1="-1.016" y1="-2.54" x2="-1.27" y2="-2.286" width="0.1524" layer="21"/>
-<wire x1="-1.016" y1="-2.54" x2="1.016" y2="-2.54" width="0.1524" layer="21"/>
-<pad name="1" x="0" y="-1.27" drill="0.9144" shape="long"/>
-<pad name="2" x="0" y="1.27" drill="0.9144" shape="long"/>
-<text x="-1.651" y="-2.54" size="1.27" layer="25" ratio="10" rot="R90">&gt;NAME</text>
-<text x="2.921" y="-2.54" size="1.27" layer="27" ratio="10" rot="R90">&gt;VALUE</text>
-<rectangle x1="-0.3048" y1="0.9652" x2="0.3048" y2="1.5748" layer="51"/>
-<rectangle x1="-0.3048" y1="-1.5748" x2="0.3048" y2="-0.9652" layer="51"/>
-</package>
-</packages>
-<symbols>
-<symbol name="JP2E">
-<wire x1="0" y1="0" x2="0" y2="1.27" width="0.1524" layer="94"/>
-<wire x1="0" y1="2.54" x2="0" y2="1.27" width="0.4064" layer="94"/>
-<wire x1="2.54" y1="0" x2="2.54" y2="1.27" width="0.1524" layer="94"/>
-<wire x1="2.54" y1="2.54" x2="2.54" y2="1.27" width="0.4064" layer="94"/>
-<wire x1="-0.635" y1="0" x2="3.175" y2="0" width="0.4064" layer="94"/>
-<wire x1="3.175" y1="0" x2="3.175" y2="0.635" width="0.4064" layer="94"/>
-<wire x1="3.175" y1="0.635" x2="-0.635" y2="0.635" width="0.4064" layer="94"/>
-<wire x1="-0.635" y1="0.635" x2="-0.635" y2="0" width="0.4064" layer="94"/>
-<text x="-1.27" y="0" size="1.778" layer="95" rot="R90">&gt;NAME</text>
-<text x="5.715" y="0" size="1.778" layer="96" rot="R90">&gt;VALUE</text>
-<pin name="1" x="0" y="-2.54" visible="pad" length="short" direction="pas" rot="R90"/>
-<pin name="2" x="2.54" y="-2.54" visible="pad" length="short" direction="pas" rot="R90"/>
-</symbol>
-</symbols>
-<devicesets>
-<deviceset name="JP1E" prefix="JP" uservalue="yes">
-<description>&lt;b&gt;JUMPER&lt;/b&gt;</description>
-<gates>
-<gate name="A" symbol="JP2E" x="2.54" y="0"/>
-</gates>
-<devices>
-<device name="" package="JP1">
-<connects>
-<connect gate="A" pin="1" pad="1"/>
-<connect gate="A" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-</devicesets>
-</library>
 </libraries>
 <attributes>
 <attribute name="VERSION" value="3.0"/>
@@ -14084,12 +14020,12 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <part name="+3V5" library="supply1" deviceset="VCC" device=""/>
 <part name="GND2" library="supply2" deviceset="GND" device=""/>
 <part name="C3" library="adafruit" deviceset="C-US" device="050-024X044" value="0.1uF"/>
-<part name="R2" library="rcl" deviceset="R-US_" device="0309/12" value="560"/>
 <part name="T1" library="transistor" deviceset="*-NPN-" device="TO92-CBE" technology="2N5551"/>
 <part name="P+1" library="supply1" deviceset="VCC" device=""/>
-<part name="JP2" library="jumper" deviceset="JP1E" device=""/>
 <part name="J1" library="CuSTOM_GB" deviceset="JACK-PLUG" device="0"/>
 <part name="OC1" library="CuSTOM_GB" deviceset="PC817" device="SMD"/>
+<part name="R9" library="rcl" deviceset="R-US_" device="0207/10" value="1K"/>
+<part name="P+5" library="supply1" deviceset="VCC" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -14266,20 +14202,12 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <attribute name="NAME" x="191.516" y="213.995" size="1.778" layer="95"/>
 <attribute name="VALUE" x="191.516" y="209.169" size="1.778" layer="96"/>
 </instance>
-<instance part="R2" gate="G$1" x="58.42" y="106.68" smashed="yes">
-<attribute name="NAME" x="54.61" y="108.1786" size="1.778" layer="95"/>
-<attribute name="VALUE" x="54.61" y="103.378" size="1.778" layer="96"/>
-</instance>
 <instance part="T1" gate="G$1" x="68.58" y="106.68" smashed="yes">
 <attribute name="NAME" x="71.12" y="106.68" size="1.778" layer="95"/>
 <attribute name="VALUE" x="58.42" y="111.76" size="1.778" layer="96"/>
 </instance>
 <instance part="P+1" gate="VCC" x="30.48" y="134.62" smashed="yes" rot="MR0">
 <attribute name="VALUE" x="27.94" y="137.16" size="1.778" layer="96" rot="MR180"/>
-</instance>
-<instance part="JP2" gate="A" x="40.64" y="132.08" smashed="yes">
-<attribute name="NAME" x="39.37" y="132.08" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="46.355" y="132.08" size="1.778" layer="96" rot="R90"/>
 </instance>
 <instance part="J1" gate="G$1" x="43.18" y="203.2" smashed="yes">
 <attribute name="NAME" x="40.64" y="198.12" size="1.778" layer="95"/>
@@ -14288,6 +14216,13 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <instance part="OC1" gate="A" x="43.18" y="109.22" smashed="yes">
 <attribute name="NAME" x="36.195" y="114.935" size="1.778" layer="95"/>
 <attribute name="VALUE" x="36.195" y="101.6" size="1.778" layer="96"/>
+</instance>
+<instance part="R9" gate="G$1" x="53.34" y="121.92" smashed="yes" rot="R270">
+<attribute name="NAME" x="54.8386" y="125.73" size="1.778" layer="95" rot="R270"/>
+<attribute name="VALUE" x="50.038" y="125.73" size="1.778" layer="96" rot="R270"/>
+</instance>
+<instance part="P+5" gate="VCC" x="53.34" y="134.62" smashed="yes" rot="MR0">
+<attribute name="VALUE" x="50.8" y="137.16" size="1.778" layer="96" rot="MR180"/>
 </instance>
 </instances>
 <busses>
@@ -14498,11 +14433,12 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <segment>
 <pinref part="P+1" gate="VCC" pin="VCC"/>
 <pinref part="R1" gate="G$1" pin="1"/>
-<wire x1="30.48" y1="127" x2="30.48" y2="129.54" width="0.1524" layer="91"/>
-<pinref part="JP2" gate="A" pin="1"/>
-<wire x1="30.48" y1="129.54" x2="30.48" y2="132.08" width="0.1524" layer="91"/>
-<wire x1="30.48" y1="129.54" x2="40.64" y2="129.54" width="0.1524" layer="91"/>
-<junction x="30.48" y="129.54"/>
+<wire x1="30.48" y1="127" x2="30.48" y2="132.08" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="R9" gate="G$1" pin="1"/>
+<pinref part="P+5" gate="VCC" pin="VCC"/>
+<wire x1="53.34" y1="127" x2="53.34" y2="132.08" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="RESET" class="0">
@@ -14720,7 +14656,7 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <label x="248.92" y="111.76" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$1" class="0">
+<net name="OC$1" class="0">
 <segment>
 <pinref part="R1" gate="G$1" pin="2"/>
 <wire x1="30.48" y1="116.84" x2="30.48" y2="111.76" width="0.1524" layer="91"/>
@@ -14728,28 +14664,19 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <pinref part="OC1" gate="A" pin="A"/>
 </segment>
 </net>
-<net name="N$7" class="0">
+<net name="OC$3" class="0">
 <segment>
-<pinref part="R2" gate="G$1" pin="1"/>
-<wire x1="50.8" y1="106.68" x2="53.34" y2="106.68" width="0.1524" layer="91"/>
 <pinref part="OC1" gate="A" pin="EMIT"/>
-</segment>
-</net>
-<net name="N$8" class="0">
-<segment>
-<pinref part="R2" gate="G$1" pin="2"/>
 <pinref part="T1" gate="G$1" pin="B"/>
-<wire x1="63.5" y1="106.68" x2="66.04" y2="106.68" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="106.68" x2="66.04" y2="106.68" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="JD-VCC" class="0">
+<net name="OC$4" class="0">
 <segment>
 <wire x1="50.8" y1="111.76" x2="53.34" y2="111.76" width="0.1524" layer="91"/>
-<wire x1="53.34" y1="111.76" x2="53.34" y2="129.54" width="0.1524" layer="91"/>
-<pinref part="JP2" gate="A" pin="2"/>
-<wire x1="43.18" y1="129.54" x2="53.34" y2="129.54" width="0.1524" layer="91"/>
-<label x="45.72" y="129.54" size="1.778" layer="95"/>
 <pinref part="OC1" gate="A" pin="COL"/>
+<pinref part="R9" gate="G$1" pin="2"/>
+<wire x1="53.34" y1="111.76" x2="53.34" y2="116.84" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$3" class="1">
@@ -14764,12 +14691,11 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 </sheet>
 </sheets>
 <errors>
-<approved hash="113,1,73.8971,43.0792,JP1,,,,,"/>
-<approved hash="113,1,235.999,22.639,FRAME2,,,,,"/>
+<approved hash="113,1,73.8971,43.0488,JP1,,,,,"/>
+<approved hash="113,1,235.991,22.6314,FRAME2,,,,,"/>
 <approved hash="113,1,68.3545,106.68,T1,,,,,"/>
-<approved hash="113,1,41.0295,131.403,JP2,,,,,"/>
-<approved hash="113,1,44.337,202.636,J1,,,,,"/>
-<approved hash="113,1,41.91,110.591,OC1,,,,,"/>
+<approved hash="113,1,44.3484,202.624,J1,,,,,"/>
+<approved hash="113,1,41.91,110.621,OC1,,,,,"/>
 </errors>
 </schematic>
 </drawing>
