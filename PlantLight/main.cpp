@@ -341,7 +341,7 @@ void setup() {
     exit(retcode);
   }
 
-//  makeTime(&utcTime, 2019, 03, 10, 15, 00, 00);
+//  makeTime(&utcTime, 2020, 03, 29, 9, 31, 00);
 //  RTC.write(&utcTime);
 
   /*
@@ -361,6 +361,7 @@ void setup() {
   BH1750.setMtreg(200);                 // Set measurement time register to high value
   delay(100);
   BH1750.sleep();                       // Send light sensor to sleep
+  */
 
   // Real time clock set: UTC time!
   RTC.read(&utcTime);
@@ -376,7 +377,6 @@ void setup() {
   // Calculates the enable and disable hour and sets the RTC alarm ALARM_2
   setWakeUpAlarm(&localTime, &alm);
 
-  */
   // Power settings
   powerReduction();
 
@@ -440,11 +440,17 @@ void loop() {
 */
 
   relayState = !relayState;
-  Serial.print(F("Relay: "));
-  Serial.println(relayState);
+  Serial.print(F(", Relay: "));
+  Serial.print(relayState);
+
+  boolean time = digitalRead(TIME_MODE_SET);
+  Serial.print(F(", Time mode: "));
+  Serial.println(time);
 
   digitalWrite(RELAY_SW_OUT, relayState);
-  delay(2000);
+  digitalWrite(TIME_MODE_LED, relayState);
+
+  delay(4000);
 
   /*
   if (setTimeMode) {

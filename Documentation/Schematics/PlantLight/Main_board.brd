@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.3.1">
+<eagle version="9.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -40,7 +40,7 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
 <layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
@@ -70,7 +70,7 @@
 <layer number="102" name="Vscore" color="7" fill="1" visible="no" active="yes"/>
 <layer number="103" name="fp3" color="7" fill="1" visible="no" active="yes"/>
 <layer number="104" name="Name" color="7" fill="1" visible="no" active="yes"/>
-<layer number="105" name="Beschreib" color="9" fill="1" visible="no" active="yes"/>
+<layer number="105" name="Beschreib" color="9" fill="1" visible="yes" active="yes"/>
 <layer number="106" name="BGA-Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="107" name="BD-Top" color="5" fill="1" visible="no" active="yes"/>
 <layer number="108" name="fp8" color="7" fill="1" visible="no" active="yes"/>
@@ -126,8 +126,6 @@
 <layer number="208" name="208bmp" color="9" fill="10" visible="no" active="yes"/>
 <layer number="209" name="209bmp" color="7" fill="1" visible="no" active="yes"/>
 <layer number="210" name="210bmp" color="7" fill="1" visible="no" active="yes"/>
-<layer number="211" name="211bmp" color="7" fill="1" visible="no" active="yes"/>
-<layer number="212" name="212bmp" color="7" fill="1" visible="no" active="yes"/>
 <layer number="213" name="213bmp" color="7" fill="1" visible="no" active="yes"/>
 <layer number="214" name="214bmp" color="7" fill="1" visible="no" active="yes"/>
 <layer number="215" name="215bmp" color="7" fill="1" visible="no" active="yes"/>
