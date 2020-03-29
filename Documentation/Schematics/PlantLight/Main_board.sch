@@ -14024,7 +14024,7 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <part name="P+1" library="supply1" deviceset="VCC" device=""/>
 <part name="J1" library="CuSTOM_GB" deviceset="JACK-PLUG" device="0"/>
 <part name="OC1" library="CuSTOM_GB" deviceset="PC817" device="SMD"/>
-<part name="R9" library="rcl" deviceset="R-US_" device="0207/10" value="1K"/>
+<part name="R2" library="rcl" deviceset="R-US_" device="0207/10" value="1K"/>
 <part name="P+5" library="supply1" deviceset="VCC" device=""/>
 </parts>
 <sheets>
@@ -14217,7 +14217,7 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <attribute name="NAME" x="36.195" y="114.935" size="1.778" layer="95"/>
 <attribute name="VALUE" x="36.195" y="101.6" size="1.778" layer="96"/>
 </instance>
-<instance part="R9" gate="G$1" x="53.34" y="121.92" smashed="yes" rot="R270">
+<instance part="R2" gate="G$1" x="53.34" y="121.92" smashed="yes" rot="R270">
 <attribute name="NAME" x="54.8386" y="125.73" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="50.038" y="125.73" size="1.778" layer="96" rot="R270"/>
 </instance>
@@ -14436,7 +14436,7 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <wire x1="30.48" y1="127" x2="30.48" y2="132.08" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="R9" gate="G$1" pin="1"/>
+<pinref part="R2" gate="G$1" pin="1"/>
 <pinref part="P+5" gate="VCC" pin="VCC"/>
 <wire x1="53.34" y1="127" x2="53.34" y2="132.08" width="0.1524" layer="91"/>
 </segment>
@@ -14675,7 +14675,7 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <segment>
 <wire x1="50.8" y1="111.76" x2="53.34" y2="111.76" width="0.1524" layer="91"/>
 <pinref part="OC1" gate="A" pin="COL"/>
-<pinref part="R9" gate="G$1" pin="2"/>
+<pinref part="R2" gate="G$1" pin="2"/>
 <wire x1="53.34" y1="111.76" x2="53.34" y2="116.84" width="0.1524" layer="91"/>
 </segment>
 </net>
