@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 3.0 b001
+ * VERSION 3.0 b002
  */
 
 #include <avr/sleep.h>
@@ -52,6 +52,9 @@
 #define MAX_SAMPLE_COUNT       50       // Max light sample count
 #define LUX_TH                 10       // Lux threshold
 #define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
+
+#define LIGHT_SEN_EMU                   // Enable light sensor emulation
+#define LIGHT_SEN_EMU_MAX      35       // Light sensor emulation maximum value
 
 // ################################# Constants ################################
 
@@ -99,7 +102,11 @@ float sample() {
     tmpLux += luxSamples[i];
   }
 
+#ifdef LIGHT_SEN_EMU
+  luxSamples[SAMPLE_COUNT - 1] = rand() % LIGHT_SEN_EMU_MAX;
+#else
   luxSamples[SAMPLE_COUNT - 1] = BH1750.getLightIntensity();
+#endif
 
   tmpLux += luxSamples[SAMPLE_COUNT - 1];
 
@@ -127,7 +134,7 @@ void cleanLuxArray() {
  */
 boolean checkLightCond(float lux) {
   int low = 0, high = 0;
-  for (int i = SAMPLE_COUNT / 2 + 1 ; i < SAMPLE_COUNT - 1; ++i) {
+  for (int i = SAMPLE_COUNT / 2 + 1; i < SAMPLE_COUNT - 1; ++i) {
     if (luxSamples[i] <= LUX_TH) {
       low++;
     } else {
@@ -239,9 +246,9 @@ boolean setTimeSerial(struct tm *utcTime, struct tm *localTime) {
       while (Serial.available() > 0)
         Serial.read();
     }
-  return true;
+    return true;
   }
-return false;
+  return false;
 }
 
 /*
@@ -341,6 +348,7 @@ void setup() {
     exit(retcode);
   }
 
+#ifndef LIGHT_SEN_EMU
   // Light sensor connection check
   if ((retcode = BH1750.checkCon()) != 0) {
     Serial.print(F("BH1750 error: "));
@@ -357,6 +365,7 @@ void setup() {
   BH1750.setMtreg(200);                 // Set measurement time register to high value
   delay(100);
   BH1750.sleep();                       // Send light sensor to sleep
+#endif
 
   // Real time clock set: UTC time!
   RTC.read(&utcTime);
@@ -395,32 +404,35 @@ void loop() {
     // Set the alarm interrupt
     RTC.alarmInterrupt(ALARM_1, true);
 
+#ifndef LIGHT_SEN_EMU
     // One time mode: the sensor reads and goes into sleep mode autonomously
     BH1750.wakeUp(BH1750_ONE_TIME_HIGH_RES_MODE_2);
 
     // Wait for the sensor to be fully awake.
     delay(500);
+#endif
 
     float lux = sample();
     relayState = checkLightCond(lux);
 
 #ifdef DEBUG
     printTime(&localTime, tcr->abbrev, false);
-    Serial.print(F("- "));
+    Serial.print(F(" - "));
     printLuxArray();
     Serial.print(F("= "));
     Serial.print(lux);
     Serial.print(F(" "));
     if (relayState)
       Serial.println(F("ON"));
-    else Serial.println(F("OFF"));
+    else
+      Serial.println(F("OFF"));
 #endif
   } else {
 
 #ifdef DEBUG
     if (!setTimeMode) {
       printTime(&localTime, tcr->abbrev, false);
-      Serial.println(F("- DISABLED"));
+      Serial.println(F(" - DISABLED"));
     }
 #endif
 
