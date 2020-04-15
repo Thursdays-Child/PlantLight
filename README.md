@@ -1,9 +1,12 @@
 # PLANT LIGHT 
 ### Automatic light switch based on light sensor and date/time
+
+**version 3.0**
+Replaced transistor with phototransistor to switch the relay. 
+
 **version 2.0**
 Upgraded PCB and logic with ATMega328p and Maxim DS3231M RTC. New schematich and new PCB. The temperature compensated clock
-now wakes up the micro once per day, with time of day alarm. Added HM10 BLE connectivity module to send and receive date, time,
-settings.
+now wakes up the micro once per day, with time of day alarm.
 
 **version 1.2**
 Added function to set time from an external input, with all the istructions needed: set draft info on RTC clock.
