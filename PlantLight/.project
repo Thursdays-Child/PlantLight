@@ -3,6 +3,11 @@
 	<name>PlantLight</name>
 	<comment></comment>
 	<projects>
+		<project>BH1750FVI</project>
+		<project>ATMegaCore</project>
+		<project>DS3232RTC</project>
+		<project>Wire</project>
+		<project>TimeZone</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

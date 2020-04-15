@@ -17,7 +17,7 @@
 
 /*
  * Built for ATMega328P 1Mhz, using AVR Pololu programmer.
- * VERSION 3.0 b002
+ * VERSION 3.0
  */
 
 #include <avr/sleep.h>
@@ -53,7 +53,7 @@
 #define LUX_TH                 10       // Lux threshold
 #define LUX_TH_HIST             5       // Lux threshold (hysteresis compensation)
 
-#define LIGHT_SEN_EMU                   // Enable light sensor emulation
+//#define LIGHT_SEN_EMU                 // Enable light sensor emulation
 #define LIGHT_SEN_EMU_MAX      35       // Light sensor emulation maximum value
 
 // ################################# Constants ################################
